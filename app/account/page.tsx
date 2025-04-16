@@ -1,234 +1,187 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import { useToast } from '@/components/ui/use-toast'
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { signOut } from "next-auth/react"
+import { CreditCard, LogOut, Package, Settings, User, Home, ShoppingBag, MapPin, Lock } from "lucide-react"
+import Link from "next/link"
+import { OrderItem } from "@/lib/orders"
 
-// Define the user type
-type User = {
-  name: string
-  email: string
-  image?: string
-}
-
-type Order = {
-  id: string
-  orderNumber: string
-  date: string
-  total: number
-  status: string
-  items: number
+interface RecentOrder {
+  _id: string
+  totalAmount: number
+  orderStatus: string
+  createdAt: string | Date
+  items: OrderItem[]
 }
 
 export default function AccountPage() {
-  const { data: session, status } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
-  const { toast } = useToast()
-  const [user, setUser] = useState<User | null>(null)
-  const [recentOrders, setRecentOrders] = useState<Order[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
+  
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/login')
-    } else if (status === 'authenticated' && session?.user) {
-      setUser(session.user as User)
-      
-      // Fetch user's recent orders
-      const fetchUserData = async () => {
-        try {
-          const response = await fetch(`/api/user/orders?limit=3`)
-          
-          if (!response.ok) {
-            throw new Error('Failed to fetch orders')
-          }
-          
+    if (!user) {
+      router.push("/auth/signin")
+      return
+    }
+    
+    // Fetch recent orders
+    const fetchRecentOrders = async () => {
+      try {
+        const response = await fetch("/api/user/orders?limit=3")
+        
+        if (response.ok) {
           const data = await response.json()
           setRecentOrders(data.orders || [])
-        } catch (error) {
-          console.error('Error fetching user data:', error)
-          toast({
-            title: "Error",
-            description: "Could not load your recent orders. Please try again later.",
-            variant: "destructive"
-          })
-        } finally {
-          setIsLoading(false)
         }
+      } catch (error) {
+        console.error("Error fetching recent orders:", error)
       }
-      
-      fetchUserData()
     }
-  }, [status, session, router, toast])
-
-  if (status === 'loading' || isLoading) {
-    return (
-      <div className="container mx-auto py-12 px-4">
-        <div className="flex items-center justify-center h-40">
-          <div className="animate-pulse text-lg">Loading your account...</div>
-        </div>
-      </div>
-    )
+    
+    fetchRecentOrders()
+  }, [user, router])
+  
+  if (!user) {
+    return null
   }
-
+  
+  const userInitials = user.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+    : "U"
+  
   return (
-    <div className="container mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold mb-8">My Account</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Sidebar */}
-        <div className="col-span-1">
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <div className="flex flex-col items-center mb-6">
-              {user?.image ? (
-                <img
-                  src={user.image}
-                  alt={user.name}
-                  className="w-24 h-24 rounded-full mb-3"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 mb-3 flex items-center justify-center">
-                  <span className="text-2xl">{user?.name?.charAt(0)}</span>
-                </div>
-              )}
-              <h2 className="text-xl font-semibold">{user?.name}</h2>
-              <p className="text-gray-500 dark:text-gray-400">{user?.email}</p>
+    <div className="container max-w-6xl py-12">
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold mb-1">My Account</h1>
+        <p className="text-muted-foreground">Manage your account and view your orders</p>
+      </div>
+      
+      <div className="grid gap-8 grid-cols-1 md:grid-cols-3">
+        {/* User Profile Card */}
+        <Card className="md:col-span-1">
+          <CardHeader className="flex flex-row items-center gap-4 pb-2">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={user.image || ""} alt={user.name || "User"} />
+              <AvatarFallback className="text-lg">{userInitials}</AvatarFallback>
+            </Avatar>
+            <div>
+              <CardTitle className="text-xl">{user.name}</CardTitle>
+              <CardDescription>{user.email}</CardDescription>
             </div>
-
-            <nav className="space-y-1">
-              <Link 
-                href="/account" 
-                className="flex items-center px-4 py-2 text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 rounded-md"
-              >
-                Account Overview
-              </Link>
-              <Link 
-                href="/account/orders" 
-                className="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-              >
-                My Orders
-              </Link>
-              <Link 
-                href="/account/addresses" 
-                className="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-              >
-                Saved Addresses
-              </Link>
-              <Link 
-                href="/account/wishlist" 
-                className="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-              >
-                Wishlist
-              </Link>
-              <Link 
-                href="/account/settings" 
-                className="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-              >
-                Settings
-              </Link>
-              <button 
-                className="flex w-full items-center px-4 py-2 text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md mt-4"
-                onClick={() => {
-                  // Handle logout here
-                }}
-              >
-                Sign Out
-              </button>
-            </nav>
-          </div>
-        </div>
-
-        {/* Main content */}
-        <div className="col-span-1 md:col-span-2">
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Account Overview</h2>
+          </CardHeader>
+          <CardContent className="pt-4">
             <div className="space-y-4">
-              <div>
-                <h3 className="text-sm text-gray-500 dark:text-gray-400">Name</h3>
-                <p>{user?.name}</p>
+              <div className="grid grid-cols-1 gap-4">
+                <Link href="/account/addresses">
+                  <Button variant="outline" className="w-full justify-start" size="lg">
+                    <MapPin className="mr-2 h-4 w-4" />
+                    My Addresses
+                  </Button>
+                </Link>
+                <Link href="/account/orders">
+                  <Button variant="outline" className="w-full justify-start" size="lg">
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    Order History
+                  </Button>
+                </Link>
+                <Button variant="outline" className="w-full justify-start" size="lg">
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </Button>
+                <Button variant="outline" className="w-full justify-start" size="lg">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Change Password
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  className="w-full justify-start" 
+                  size="lg"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
               </div>
-              <div>
-                <h3 className="text-sm text-gray-500 dark:text-gray-400">Email</h3>
-                <p>{user?.email}</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Orders and Activities */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Recent Orders</CardTitle>
+            <CardDescription>
+              Your recently placed orders and their status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentOrders.length === 0 ? (
+              <div className="text-center py-8 border rounded-lg bg-muted/10">
+                <Package className="h-12 w-12 mx-auto text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-medium">No orders yet</h3>
+                <p className="text-muted-foreground mt-2">You haven't placed any orders yet</p>
+                <Link href="/shop">
+                  <Button className="mt-4">
+                    Start Shopping
+                  </Button>
+                </Link>
               </div>
-            </div>
-            <div className="mt-6">
-              <button className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                Edit Profile
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Recent Orders</h2>
-              <Link 
-                href="/account/orders" 
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
-              >
-                View All
-              </Link>
-            </div>
-            
-            {recentOrders.length > 0 ? (
+            ) : (
               <div className="space-y-4">
                 {recentOrders.map((order) => (
-                  <div key={order.id} className="border border-gray-200 dark:border-gray-700 rounded-md p-4">
-                    <div className="flex justify-between mb-2">
-                      <span className="font-medium">#{order.orderNumber}</span>
-                      <span className="text-sm text-gray-500">{new Date(order.date).toLocaleDateString()}</span>
+                  <div key={order._id} className="border rounded-md p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="font-medium">
+                          Order #{order._id.toString().substring(0, 8).toUpperCase()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium">
+                        ₹{order.totalAmount.toFixed(2)}
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm">{order.items} item(s)</span>
-                      <span className="font-medium">${order.total.toFixed(2)}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">{order.items.length} items • </span>
+                        <span className={
+                          order.orderStatus === "processing" ? "text-blue-500" :
+                          order.orderStatus === "shipped" ? "text-orange-500" :
+                          order.orderStatus === "delivered" ? "text-green-500" :
+                          "text-red-500"
+                        }>
+                          {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
+                        </span>
+                      </div>
+                      <Link href={`/order-confirmation/${order._id}`}>
+                        <Button variant="link" className="h-auto p-0">View Order</Button>
+                      </Link>
                     </div>
-                    <div className="mt-2">
-                      <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                        {order.status}
-                      </span>
-                    </div>
-                    <Link 
-                      href={`/account/orders/${order.id}`}
-                      className="mt-3 text-sm text-blue-600 hover:text-blue-500 block"
-                    >
-                      View Order
-                    </Link>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <p>No recent orders found.</p>
-                <Link 
-                  href="/shop" 
-                  className="mt-2 inline-block text-blue-600 hover:text-blue-500"
-                >
-                  Start Shopping
-                </Link>
-              </div>
             )}
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Saved Addresses</h2>
-              <Link 
-                href="/account/addresses" 
-                className="text-sm font-medium text-blue-600 hover:text-blue-500"
-              >
-                View All
+          </CardContent>
+          {recentOrders.length > 0 && (
+            <CardFooter className="flex justify-center border-t pt-6">
+              <Link href="/account/orders">
+                <Button variant="outline">View All Orders</Button>
               </Link>
-            </div>
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <p>No addresses saved yet.</p>
-              <button className="mt-2 text-blue-600 hover:text-blue-500">
-                Add New Address
-              </button>
-            </div>
-          </div>
-        </div>
+            </CardFooter>
+          )}
+        </Card>
       </div>
     </div>
   )

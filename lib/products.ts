@@ -136,13 +136,22 @@ export async function deleteProduct(id: string) {
 export async function getProductStats() {
   const { db } = await connectToDatabase()
   
+  // Total products count
   const totalProducts = await db.collection("products").countDocuments()
-  const lowStock = await db.collection("products").countDocuments({ stock: { $lt: 10 } })
-  const categories = await db.collection("products").distinct("category")
+  
+  // Products with low stock (less than 10 items)
+  const lowStock = await db.collection("products").countDocuments({
+    stock: { $lt: 10, $gt: 0 }
+  })
+  
+  // Out of stock products
+  const outOfStock = await db.collection("products").countDocuments({
+    stock: { $lte: 0 }
+  })
   
   return {
     totalProducts,
     lowStock,
-    categories: categories.length
+    outOfStock
   }
 }

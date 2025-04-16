@@ -1,284 +1,298 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import { formatDistanceToNow } from 'date-fns'
-import { useToast } from '@/components/ui/use-toast'
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { Loader2, Package, ShoppingBag, MessageSquare } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
+import { formatCurrency, formatDate } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 
-// Define the order types
-type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled'
-
-type OrderItem = {
-  id: string
-  productId: string
-  name: string
-  price: number
-  quantity: number
-  image: string
+// Order status badge colors
+const statusColors = {
+  processing: "bg-blue-500",
+  shipped: "bg-orange-500",
+  delivered: "bg-green-500",
+  cancelled: "bg-red-500",
 }
 
-type Order = {
-  id: string
-  orderNumber: string
-  date: string
-  total: number
-  status: OrderStatus
+// Define the Order type based on the data structure
+interface OrderItem {
+  _id: string
+  name: string
+  price: number
+  image: string
+  quantity: number
+  variant?: string
+}
+
+interface Order {
+  _id: string
+  user: {
+    _id: string
+    name: string
+    email: string
+  }
   items: OrderItem[]
+  totalAmount: number
   shippingAddress: {
     name: string
-    street: string
+    address: string
     city: string
     state: string
-    zip: string
+    postalCode: string
     country: string
   }
+  paymentStatus: "pending" | "completed" | "failed"
+  paymentId?: string
+  orderStatus: "processing" | "shipped" | "delivered" | "cancelled"
+  adminComment?: string
+  createdAt: string | Date
+  updatedAt: string | Date
 }
 
 export default function OrdersPage() {
-  const { data: session, status } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
+  
   const [orders, setOrders] = useState<Order[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-
+  const [loading, setLoading] = useState(true)
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
+  
+  // Fetch orders when component mounts
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/login')
-    } else if (status === 'authenticated') {
-      // Fetch orders from API
-      const fetchOrders = async () => {
-        try {
-          const response = await fetch('/api/user/orders')
-          
-          if (!response.ok) {
-            throw new Error('Failed to fetch orders')
-          }
-          
-          const data = await response.json()
-          setOrders(data.orders || [])
-        } catch (error) {
-          console.error('Error fetching orders:', error)
-          toast({
-            title: "Error",
-            description: "Could not load your orders. Please try again later.",
-            variant: "destructive"
-          })
-          // Fall back to mock data if API fails in development
-          if (process.env.NODE_ENV === 'development') {
-            setOrders(mockOrders)
-          }
-        } finally {
-          setIsLoading(false)
-        }
+    if (!user) {
+      router.push("/auth/signin")
+      return
+    }
+    
+    fetchOrders()
+  }, [user, router])
+  
+  const fetchOrders = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/user/orders")
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch orders")
       }
       
-      fetchOrders()
-    }
-  }, [status, router, session, toast])
-
-  // Mock orders data as fallback
-  const mockOrders: Order[] = [
-    {
-      id: '1',
-      orderNumber: 'ORD-2023-001',
-      date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
-      total: 249.99,
-      status: 'delivered',
-      items: [
-        {
-          id: '1',
-          productId: 'prod-1',
-          name: 'Gold Pendant Necklace',
-          price: 149.99,
-          quantity: 1,
-          image: 'https://placehold.co/1920x1080/gold/white?text=necklace-1'
-        },
-        {
-          id: '2',
-          productId: 'prod-2',
-          name: 'Silver Stud Earrings',
-          price: 49.99,
-          quantity: 2,
-          image: 'https://placehold.co/1920x1080/gold/white?text=earings-1'
-        }
-      ],
-      shippingAddress: {
-        name: 'John Doe',
-        street: '123 Main St',
-        city: 'New York',
-        state: 'NY',
-        zip: '10001',
-        country: 'USA'
-      }
-    },
-    {
-      id: '2',
-      orderNumber: 'ORD-2023-002',
-      date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-      total: 599.99,
-      status: 'shipped',
-      items: [
-        {
-          id: '3',
-          productId: 'prod-3',
-          name: 'Diamond Ring',
-          price: 599.99,
-          quantity: 1,
-          image: 'https://placehold.co/1920x1080/gold/white?text=jewelry-1'
-        }
-      ],
-      shippingAddress: {
-        name: 'John Doe',
-        street: '123 Main St',
-        city: 'New York',
-        state: 'NY',
-        zip: '10001',
-        country: 'USA'
-      }
-    }
-  ]
-
-  // Function to get the appropriate status badge
-  const getStatusBadge = (status: OrderStatus) => {
-    switch (status) {
-      case 'processing':
-        return <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Processing</span>
-      case 'shipped':
-        return <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">Shipped</span>
-      case 'delivered':
-        return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Delivered</span>
-      case 'cancelled':
-        return <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Cancelled</span>
-      default:
-        return null
+      const data = await response.json()
+      setOrders(data.orders || [])
+    } catch (error) {
+      console.error("Error fetching orders:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load your orders",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
-
-  if (status === 'loading' || isLoading) {
+  
+  const toggleOrderDetails = (orderId: string) => {
+    if (expandedOrderId === orderId) {
+      setExpandedOrderId(null)
+    } else {
+      setExpandedOrderId(orderId)
+    }
+  }
+  
+  if (loading && orders.length === 0) {
     return (
-      <div className="container mx-auto py-12 px-4">
-        <div className="flex items-center justify-center h-40">
-          <div className="animate-pulse text-lg">Loading your orders...</div>
+      <div className="container max-w-4xl py-12">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">My Orders</h1>
+            <p className="text-muted-foreground">View your order history</p>
+          </div>
+          <Link href="/account">
+            <Button variant="outline">Back to Account</Button>
+          </Link>
+        </div>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     )
   }
-
+  
   return (
-    <div className="container mx-auto py-12 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">My Orders</h1>
-        <Link href="/account" className="text-blue-600 hover:text-blue-500">
-          Back to Account
+    <div className="container max-w-4xl py-12">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">My Orders</h1>
+          <p className="text-muted-foreground">View your order history</p>
+        </div>
+        <Link href="/account">
+          <Button variant="outline">Back to Account</Button>
         </Link>
       </div>
-
+      
       {orders.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-12 text-center">
-          <h2 className="text-xl font-medium mb-4">You haven't placed any orders yet</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Browse our collections and discover our latest products.
-          </p>
-          <Link 
-            href="/shop" 
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition duration-150"
-          >
-            Start Shopping
+        <div className="text-center py-12 border rounded-lg bg-muted/10">
+          <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-medium">No orders yet</h3>
+          <p className="text-muted-foreground mt-2">You haven't placed any orders yet</p>
+          <Link href="/shop">
+            <Button className="mt-4">
+              Start Shopping
+            </Button>
           </Link>
         </div>
       ) : (
         <div className="space-y-6">
           {orders.map((order) => (
-            <div key={order.id} className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-              <div className="border-b border-gray-200 dark:border-gray-700 p-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <Card key={order._id} className="overflow-hidden">
+              <CardHeader className="pb-4">
+                <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-lg font-medium mb-2">Order #{order.orderNumber}</h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Placed {formatDistanceToNow(new Date(order.date))} ago
-                    </p>
+                    <CardTitle className="text-lg">
+                      Order #{order._id.toString().substring(0, 8).toUpperCase()}
+                    </CardTitle>
+                    <CardDescription>
+                      Placed on {formatDate(new Date(order.createdAt))}
+                    </CardDescription>
                   </div>
-                  <div className="mt-4 md:mt-0 flex flex-col md:flex-row md:items-center">
-                    <div className="mr-4 mb-2 md:mb-0">{getStatusBadge(order.status)}</div>
-                    <div className="text-right">
-                      <span className="block text-lg font-semibold">${order.total.toFixed(2)}</span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{order.items.length} items</span>
-                    </div>
+                  <Badge 
+                    className={
+                      order.orderStatus === "processing" ? "bg-blue-500" :
+                      order.orderStatus === "shipped" ? "bg-orange-500" :
+                      order.orderStatus === "delivered" ? "bg-green-500" :
+                      "bg-red-500"
+                    }
+                  >
+                    {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center mt-2 text-sm">
+                  <div className="flex items-center">
+                    <Package className="h-4 w-4 mr-1" />
+                    <span>{order.items.length} {order.items.length === 1 ? "item" : "items"}</span>
+                  </div>
+                  <div className="font-semibold">
+                    {formatCurrency(order.totalAmount)}
                   </div>
                 </div>
-              </div>
+              </CardHeader>
               
-              <div className="p-6">
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">ITEMS</h3>
+              <CardContent className="pb-2">
+                <div className="flex overflow-x-auto space-x-4 py-2 px-1">
+                  {order.items.slice(0, 4).map((item) => (
+                    <div key={item._id} className="relative min-w-[80px] h-20 rounded overflow-hidden border">
+                      {item.image && (
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      )}
+                    </div>
+                  ))}
+                  {order.items.length > 4 && (
+                    <div className="relative min-w-[80px] h-20 rounded overflow-hidden border bg-muted flex items-center justify-center">
+                      <span className="text-sm font-medium">+{order.items.length - 4} more</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              
+              <CardFooter className="justify-between pt-0 pb-4">
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-primary" 
+                  onClick={() => toggleOrderDetails(order._id)}
+                >
+                  {expandedOrderId === order._id ? "Hide Details" : "View Details"}
+                </Button>
+                <Link href={`/order-confirmation/${order._id}`}>
+                  <Button variant="outline" size="sm">View Order</Button>
+                </Link>
+              </CardFooter>
+              
+              {expandedOrderId === order._id && (
+                <div className="bg-accent/20 px-6 py-4">
+                  <h4 className="font-medium mb-3">Order Details</h4>
+                  
                   <div className="space-y-4">
-                    {order.items.map((item) => (
-                      <div key={item.id} className="flex items-start">
-                        <div className="flex-shrink-0 h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden">
-                          {item.image ? (
-                            <img 
-                              src={item.image} 
-                              alt={item.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-full w-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-xs text-gray-500">
-                              Image
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Items</h5>
+                      <div className="space-y-3">
+                        {order.items.map((item) => (
+                          <div key={item._id} className="flex justify-between text-sm">
+                            <div className="flex-1">
+                              <div>{item.name}</div>
+                              {item.variant && <div className="text-muted-foreground">{item.variant}</div>}
+                              <div className="text-muted-foreground">Qty: {item.quantity}</div>
                             </div>
-                          )}
-                        </div>
-                        <div className="ml-4 flex-1">
-                          <h4 className="text-sm font-medium">{item.name}</h4>
-                          <div className="mt-1 flex justify-between">
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              Qty: {item.quantity}
-                            </div>
-                            <div className="text-sm font-medium">
-                              ${item.price.toFixed(2)}
+                            <div className="font-medium">
+                              {formatCurrency(item.price * item.quantity)}
                             </div>
                           </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Shipping Address</h5>
+                      <div className="text-sm text-muted-foreground">
+                        <p>{order.shippingAddress.name}</p>
+                        <p>{order.shippingAddress.address}</p>
+                        <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
+                        <p>{order.shippingAddress.country}</p>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Order Summary</h5>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>Subtotal</span>
+                          <span>{formatCurrency(order.totalAmount - 500)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Shipping</span>
+                          <span>{formatCurrency(500)}</span>
+                        </div>
+                        <div className="flex justify-between font-medium mt-2">
+                          <span>Total</span>
+                          <span>{formatCurrency(order.totalAmount)}</span>
                         </div>
                       </div>
-                    ))}
+                    </div>
+                    
+                    {order.adminComment && (
+                      <>
+                        <Separator />
+                        <div>
+                          <h5 className="text-sm font-medium mb-2 flex items-center">
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Message from Seller
+                          </h5>
+                          <div className="text-sm p-3 bg-muted rounded-md">
+                            {order.adminComment}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
-                
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">SHIPPING ADDRESS</h3>
-                  <p className="text-sm">
-                    {order.shippingAddress.name}<br />
-                    {order.shippingAddress.street}<br />
-                    {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}<br />
-                    {order.shippingAddress.country}
-                  </p>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <Link 
-                    href={`/account/orders/${order.id}`}
-                    className="inline-flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
-                  >
-                    View Order Details
-                  </Link>
-                  
-                  {order.status === 'delivered' && (
-                    <button
-                      className="inline-flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
-                    >
-                      Write a Review
-                    </button>
-                  )}
-                  
-                  <button
-                    className="inline-flex justify-center items-center py-2 px-4 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
-                  >
-                    {order.status === 'delivered' ? 'Buy Again' : 'Track Order'}
-                  </button>
-                </div>
-              </div>
-            </div>
+              )}
+            </Card>
           ))}
         </div>
       )}

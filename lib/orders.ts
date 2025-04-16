@@ -30,6 +30,7 @@ export interface Order {
   paymentStatus: "pending" | "completed" | "failed"
   paymentId?: string
   orderStatus: "processing" | "shipped" | "delivered" | "cancelled"
+  adminComment?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -52,9 +53,9 @@ export async function getUserOrders(userId: string) {
 export async function createOrder(orderData: Omit<Order, "_id" | "createdAt" | "updatedAt">) {
   const { db } = await connectToDatabase()
   
-  const order: Order = {
+  const order = {
     ...orderData,
-    orderStatus: "pending",
+    orderStatus: "processing",
     paymentStatus: "pending",
     createdAt: new Date(),
     updatedAt: new Date()
@@ -64,12 +65,23 @@ export async function createOrder(orderData: Omit<Order, "_id" | "createdAt" | "
   return { ...order, _id: result.insertedId.toString() }
 }
 
-export async function updateOrderStatus(id: string, orderStatus: Order["orderStatus"]) {
+export async function updateOrderStatus(id: string, orderStatus: Order["orderStatus"], adminComment?: string) {
   const { db } = await connectToDatabase()
+  
+  const updateData: Partial<Order> = { 
+    orderStatus, 
+    updatedAt: new Date() 
+  }
+  
+  if (adminComment) {
+    updateData.adminComment = adminComment
+  }
+  
   await db.collection("orders").updateOne(
     { _id: new ObjectId(id) },
-    { $set: { orderStatus, updatedAt: new Date() } }
+    { $set: updateData }
   )
+  
   return getOrderById(id)
 }
 
@@ -93,6 +105,24 @@ export async function updatePaymentStatus(orderId: string, status: "completed" |
     { _id: new ObjectId(orderId) },
     { $set: updateData }
   )
+  
+  return getOrderById(orderId)
+}
+
+export async function addAdminComment(orderId: string, comment: string) {
+  const { db } = await connectToDatabase()
+  
+  await db.collection("orders").updateOne(
+    { _id: new ObjectId(orderId) },
+    { 
+      $set: { 
+        adminComment: comment,
+        updatedAt: new Date() 
+      } 
+    }
+  )
+  
+  return getOrderById(orderId)
 }
 
 export async function updateOrder(id: string, updateData: Partial<Order>) {
@@ -116,12 +146,10 @@ export async function getOrderStats() {
   const processOrders = await db.collection("orders").countDocuments({ orderStatus: "processing" })
   const completedOrders = await db.collection("orders").countDocuments({ orderStatus: "delivered" })
   
-  // Monthly revenue
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
   startOfMonth.setHours(0, 0, 0, 0)
   
-  // Last month for comparison
   const startOfLastMonth = new Date(startOfMonth)
   startOfLastMonth.setMonth(startOfLastMonth.getMonth() - 1)
   
@@ -135,10 +163,13 @@ export async function getOrderStats() {
     paymentStatus: "completed"
   }).toArray()
   
-  const monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + order.totalAmount, 0)
-  const lastMonthRevenue = lastMonthOrders.reduce((sum, order) => sum + order.totalAmount, 0)
+  const calculateTotalAmount = (order: any) => {
+    return (order.totalAmount || order.total || 0);
+  };
   
-  // Calculate percentage changes
+  const monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + calculateTotalAmount(order), 0)
+  const lastMonthRevenue = lastMonthOrders.reduce((sum, order) => sum + calculateTotalAmount(order), 0)
+  
   const revenueChange = lastMonthRevenue === 0 
     ? 100 
     : Math.round(((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100)
@@ -147,8 +178,7 @@ export async function getOrderStats() {
     ? 100 
     : Math.round(((monthlyOrders.length - lastMonthOrders.length) / lastMonthOrders.length) * 100)
   
-  // Generate mock monthly sales data
-  const monthlySales = generateMonthlySalesData(monthlyRevenue)
+  const monthlySales = generateMonthlySalesData(monthlyOrders)
   
   return {
     totalOrders,
@@ -161,28 +191,29 @@ export async function getOrderStats() {
   }
 }
 
-// Helper function to generate monthly sales data
-function generateMonthlySalesData(totalRevenue: number) {
+function generateMonthlySalesData(orders: any[]) {
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ]
   
   const currentMonth = new Date().getMonth()
-  const lastSixMonths = months
-    .slice(Math.max(0, currentMonth - 5), currentMonth + 1)
-    .map((name, i, arr) => {
-      // Distribute the total revenue across months with a random variation
-      // Make the last month (current month) have the largest share
-      const factor = i === arr.length - 1 
-        ? 0.3 + Math.random() * 0.2 // Current month gets 30-50% of revenue
-        : (0.5 + Math.random() * 0.5) * (i + 1) / arr.length // Earlier months get progressively less
-        
-      return {
-        name,
-        total: Math.round(totalRevenue * factor / arr.length * 10) / 10
-      }
-    })
+  const monthlyData = Array(6).fill(0).map((_, i) => {
+    const monthIndex = (currentMonth - 5 + i + 12) % 12
+    return { name: months[monthIndex], total: 0 }
+  })
+  
+  orders.forEach(order => {
+    const orderDate = order.createdAt instanceof Date ? order.createdAt : new Date(order.createdAt)
+    const monthIndex = orderDate.getMonth()
+    const monthName = months[monthIndex]
     
-  return lastSixMonths
+    const dataIndex = monthlyData.findIndex(item => item.name === monthName)
+    if (dataIndex !== -1) {
+      const orderAmount = order.totalAmount || order.total || 0
+      monthlyData[dataIndex].total += orderAmount
+    }
+  })
+  
+  return monthlyData
 } 

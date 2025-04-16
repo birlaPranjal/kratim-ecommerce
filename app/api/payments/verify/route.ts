@@ -1,47 +1,53 @@
-import { NextResponse } from "next/server"
-import { verifyPaymentSignature } from "@/lib/razorpay"
-import { updatePaymentStatus } from "@/lib/orders"
+import { NextRequest, NextResponse } from "next/server"
+import { updatePaymentStatus, getOrderById } from "@/lib/orders"
+import { verifyPayment } from "@/lib/razorpay"
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { orderId, razorpayPaymentId, razorpayOrderId, razorpaySignature } = await request.json()
-
+    const body = await req.json()
+    
+    const { orderId, razorpayPaymentId, razorpayOrderId, razorpaySignature } = body
+    
     if (!orderId || !razorpayPaymentId) {
-      return NextResponse.json(
-        { success: false, error: "Missing required payment parameters" },
-        { status: 400 }
-      )
+      return NextResponse.json({ 
+        success: false, 
+        error: "Missing required parameters" 
+      }, { status: 400 })
     }
-
-    // If we don't have both order ID and signature, skip signature verification
-    if (razorpayOrderId && razorpaySignature) {
-      // Verify the payment signature
-      const isValid = verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature)
-
-      if (!isValid) {
-        return NextResponse.json(
-          { success: false, error: "Invalid payment signature" },
-          { status: 400 }
-        )
-      }
-    } else {
-      console.log("Skipping signature verification - missing required data", {
-        orderId,
-        razorpayPaymentId,
+    
+    // If signature is available, verify the payment
+    if (razorpaySignature && razorpayOrderId) {
+      const isValid = await verifyPayment({
         razorpayOrderId,
+        razorpayPaymentId,
         razorpaySignature
-      });
+      })
+      
+      if (!isValid) {
+        await updatePaymentStatus(orderId, "failed")
+        return NextResponse.json({ 
+          success: false, 
+          error: "Invalid payment signature" 
+        }, { status: 400 })
+      }
     }
-
-    // Update the order status
+    
+    // Update payment status
     await updatePaymentStatus(orderId, "completed", razorpayPaymentId)
-
-    return NextResponse.json({ success: true })
+    
+    // Get the updated order
+    const updatedOrder = await getOrderById(orderId)
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: "Payment verified successfully",
+      order: updatedOrder
+    })
   } catch (error) {
-    console.error("Error verifying payment:", error)
-    return NextResponse.json(
-      { success: false, error: "Failed to verify payment" },
-      { status: 500 }
-    )
+    console.error("Payment verification error:", error)
+    return NextResponse.json({ 
+      success: false, 
+      error: "Failed to verify payment" 
+    }, { status: 500 })
   }
 }
