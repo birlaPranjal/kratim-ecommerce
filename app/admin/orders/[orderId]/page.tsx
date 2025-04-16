@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
-import { getOrderById, updateOrderStatus } from "@/lib/orders"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ArrowLeft, Printer } from "lucide-react"
 import Link from "next/link"
@@ -18,7 +17,6 @@ export default function AdminOrderDetailsPage({
   params: { orderId: string }
 }) {
   const { toast } = useToast()
-  const router = useRouter()
 
   const [order, setOrder] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -28,7 +26,13 @@ export default function AdminOrderDetailsPage({
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const orderData = await getOrderById(params.orderId)
+        const response = await fetch(`/api/orders/${params.orderId}`)
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch order")
+        }
+
+        const orderData = await response.json()
 
         if (orderData) {
           setOrder(orderData)
@@ -53,14 +57,23 @@ export default function AdminOrderDetailsPage({
     try {
       setIsUpdating(true)
 
-      await updateOrderStatus(params.orderId, status)
+      const response = await fetch(`/api/orders/${params.orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update order status")
+      }
 
       toast({
         title: "Status updated",
         description: "The order status has been updated successfully.",
       })
 
-      // Update the local order object
       setOrder((prev: any) => ({ ...prev, status }))
     } catch (error) {
       console.error("Error updating order status:", error)
@@ -129,7 +142,7 @@ export default function AdminOrderDetailsPage({
                 <div className="flex items-center gap-2">
                   <span
                     className={`inline-block w-2 h-2 rounded-full ${
-                      order.status === "completed"
+                      order.status === "delivered"
                         ? "bg-green-500"
                         : order.status === "processing"
                           ? "bg-blue-500"
@@ -197,7 +210,7 @@ export default function AdminOrderDetailsPage({
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="processing">Processing</SelectItem>
                   <SelectItem value="shipped">Shipped</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>

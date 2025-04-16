@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
-import { updateUserRole } from "@/lib/users"
 import { useRouter } from "next/navigation"
 import {
   Dialog,
@@ -19,6 +18,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+interface User {
+  _id: string
+  name: string
+  email: string
+  image?: string
+  role: "user" | "admin"
+  createdAt: string | Date
+}
 
 interface UsersTableProps {
   users: any[]
@@ -51,7 +59,17 @@ export default function UsersTable({ users }: UsersTableProps) {
     try {
       setIsUpdating(true)
 
-      await updateUserRole(selectedUser._id, newRole)
+      const response = await fetch(`/api/users/${selectedUser._id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ role: newRole })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update user role')
+      }
 
       toast({
         title: "Role updated",

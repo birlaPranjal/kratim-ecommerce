@@ -137,41 +137,69 @@ export default function CheckoutPage() {
     try {
       await loadRazorpay()
 
+      // Fetch the Razorpay key from the API
+      const keyResponse = await fetch("/api/payments/key");
+      if (!keyResponse.ok) {
+        throw new Error("Failed to fetch Razorpay key");
+      }
+      const { key } = await keyResponse.json();
+
+      if (!key) {
+        throw new Error("Razorpay key not available");
+      }
+
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: key,
         amount: order.total * 100, // Razorpay expects amount in paise
         currency: "INR",
         name: "Emerald Gold",
         description: `Order #${order._id}`,
         order_id: order.razorpayOrderId,
         handler: async (response: any) => {
-          // Verify payment on the server
-          const result = await fetch("/api/payments/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: order._id,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpayOrderId: response.razorpay_order_id,
-              razorpaySignature: response.razorpay_signature,
-            }),
-          })
+          console.log("Razorpay response:", response);
+          
+          try {
+            // Verify payment on the server
+            const result = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: order._id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                // Only include these fields if they exist in the response
+                ...(response.razorpay_order_id && { razorpayOrderId: response.razorpay_order_id }),
+                ...(response.razorpay_signature && { razorpaySignature: response.razorpay_signature }),
+              }),
+            });
 
-          const data = await result.json()
+            if (!result.ok) {
+              throw new Error(`Server returned ${result.status}: ${result.statusText}`);
+            }
 
-          if (data.success) {
-            toast({
-              title: "Payment successful!",
-              description: "Your order has been placed and will be delivered soon.",
-            })
-            clearCart()
-            router.push(`/order-confirmation/${order._id}`)
-          } else {
+            const data = await result.json();
+
+            if (data.success) {
+              toast({
+                title: "Payment successful!",
+                description: "Your order has been placed and will be delivered soon.",
+              });
+              clearCart();
+              router.push(`/order-confirmation/${order._id}`);
+            } else {
+              console.error("Payment verification error:", data);
+              toast({
+                title: "Payment verification failed",
+                description: data.error || "There was an error verifying your payment. Please contact support.",
+                variant: "destructive",
+              });
+            }
+          } catch (error) {
+            console.error("Payment handler error:", error);
             toast({
               title: "Payment verification failed",
-              description: "There was an error verifying your payment. Please contact support.",
+              description: "There was an error processing your payment. Please check your order status in your account or contact support.",
               variant: "destructive",
-            })
+            });
           }
         },
         prefill: {

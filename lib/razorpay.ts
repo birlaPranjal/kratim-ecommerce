@@ -47,15 +47,19 @@ export function verifyPaymentSignature(
   paymentId: string,
   signature: string
 ) {
-  // Create a signature using the order_id and payment_id
-  const text = `${orderId}|${paymentId}`
-  const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
-    .update(text)
-    .digest("hex")
+  try {
+    // Create a signature using the order_id and payment_id
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "")
+      .update(orderId + "|" + paymentId)
+      .digest("hex");
 
-  // Compare the signatures
-  return expectedSignature === signature
+    // Compare the signatures
+    return generatedSignature === signature;
+  } catch (error) {
+    console.error("Error verifying signature:", error);
+    return false;
+  }
 }
 
 export function getPublicKey() {

@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
-import { getProductById, updateProduct, deleteProduct } from "@/lib/products"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -55,7 +54,13 @@ export default function EditProductPage({
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const product = await getProductById(params.productId)
+        const response = await fetch(`/api/products/${params.productId}`)
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch product")
+        }
+        
+        const product = await response.json()
 
         if (product) {
           setFormData({
@@ -146,7 +151,17 @@ export default function EditProductPage({
         features: formData.features.filter((feature) => feature.trim() !== ""),
       }
 
-      await updateProduct(params.productId, productData)
+      const response = await fetch(`/api/products/${params.productId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(productData)
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update product")
+      }
 
       toast({
         title: "Product updated",
@@ -170,7 +185,13 @@ export default function EditProductPage({
     try {
       setIsDeleting(true)
 
-      await deleteProduct(params.productId)
+      const response = await fetch(`/api/products/${params.productId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete product")
+      }
 
       toast({
         title: "Product deleted",

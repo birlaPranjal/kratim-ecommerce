@@ -4,10 +4,17 @@ import ProductFilters from "@/components/product-filters"
 import { Suspense } from "react"
 import { ProductSkeletonGrid } from "@/components/product-skeleton"
 
+interface SearchParams {
+  category?: string;
+  sort?: string;
+  minPrice?: string;
+  maxPrice?: string;
+}
+
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: SearchParams
 }) {
   // Get all products to extract categories and max price for filters
   const allProducts = await getProducts()
@@ -19,10 +26,10 @@ export default async function ShopPage({
   const maxPrice = Math.max(...allProducts.map(product => product.price), 0)
   
   // Parse search params
-  const category = searchParams.category as string | undefined
-  const sort = searchParams.sort as string | undefined
-  const minPrice = searchParams.minPrice ? parseInt(searchParams.minPrice as string) : undefined
-  const maxPriceParam = searchParams.maxPrice ? parseInt(searchParams.maxPrice as string) : undefined
+  const category = searchParams.category && searchParams.category !== 'all' ? searchParams.category : undefined
+  const sort = searchParams.sort && searchParams.sort !== 'default' ? searchParams.sort : undefined
+  const minPrice = searchParams.minPrice ? parseInt(searchParams.minPrice) : undefined
+  const maxPriceParam = searchParams.maxPrice ? parseInt(searchParams.maxPrice) : undefined
   
   // Filter products based on search params
   const products = await getProducts({ 
@@ -31,6 +38,14 @@ export default async function ShopPage({
     minPrice, 
     maxPrice: maxPriceParam 
   })
+
+  // Create an object with the current filter values to pass to the client component
+  const currentFilters = {
+    category: category || "all",
+    sort: sort || "default",
+    minPrice: minPrice || 0,
+    maxPrice: maxPriceParam || maxPrice
+  }
 
   return (
     <div className="container mx-auto py-12">
@@ -41,7 +56,7 @@ export default async function ShopPage({
           <ProductFilters 
             categories={categories} 
             maxPrice={maxPrice}
-            onApplyFilters={() => {}} // Client-side handler will be used
+            currentFilters={currentFilters}
           />
         </div>
 

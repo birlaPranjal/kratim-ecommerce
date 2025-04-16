@@ -1,13 +1,27 @@
 "use client"
 
 import { useCart } from "@/lib/cart-context"
-import { Product } from "@/lib/products"
+// Remove the direct import from lib/products
+// import { Product } from "@/lib/products"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "@/components/ui/use-toast"
+
+// Define Product type locally
+interface Product {
+  _id: string
+  name: string
+  description: string
+  price: number
+  compareAtPrice?: number
+  images: string[]
+  category: string
+  featured?: boolean
+  inventory: number
+}
 
 interface ProductCardProps {
   product: Product

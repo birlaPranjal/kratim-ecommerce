@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,54 +24,76 @@ import { X } from "lucide-react"
 interface ProductFiltersProps {
   categories: string[]
   maxPrice: number
-  onApplyFilters: (filters: {
-    minPrice?: number
-    maxPrice?: number
-    category?: string
-    sort?: string
-  }) => void
+  currentFilters: {
+    category: string
+    sort: string
+    minPrice: number
+    maxPrice: number
+  }
 }
 
-export default function ProductFilters({ categories, maxPrice, onApplyFilters }: ProductFiltersProps) {
-  const [minPrice, setMinPrice] = useState(0)
-  const [selectedMaxPrice, setSelectedMaxPrice] = useState(maxPrice)
-  const [category, setCategory] = useState<string>("")
-  const [sort, setSort] = useState<string>("")
+export default function ProductFilters({ categories, maxPrice, currentFilters }: ProductFiltersProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  const [minPrice, setMinPrice] = useState(currentFilters.minPrice)
+  const [selectedMaxPrice, setSelectedMaxPrice] = useState(currentFilters.maxPrice || maxPrice)
+  const [category, setCategory] = useState<string>(currentFilters.category || "all")
+  const [sort, setSort] = useState<string>(currentFilters.sort || "default")
   const [filtersChanged, setFiltersChanged] = useState(false)
 
+  // Check if the current filters differ from the URL params
   useEffect(() => {
-    setFiltersChanged(true)
-  }, [minPrice, selectedMaxPrice, category, sort])
+    const urlMinPrice = searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice') as string) : 0
+    const urlMaxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice') as string) : maxPrice
+    const urlCategory = searchParams.get('category') || "all"
+    const urlSort = searchParams.get('sort') || "default"
+    
+    // Check if any filters have changed from the URL
+    const hasChanged = 
+      minPrice !== urlMinPrice ||
+      selectedMaxPrice !== urlMaxPrice ||
+      category !== urlCategory ||
+      sort !== urlSort
+
+    setFiltersChanged(hasChanged)
+  }, [minPrice, selectedMaxPrice, category, sort, searchParams, maxPrice])
 
   const handleReset = () => {
     setMinPrice(0)
     setSelectedMaxPrice(maxPrice)
-    setCategory("")
-    setSort("")
-    onApplyFilters({})
+    setCategory("all")
+    setSort("default")
+    
+    // Update URL by removing all filter parameters
+    router.push('/shop')
     setFiltersChanged(false)
   }
 
   const handleApplyFilters = () => {
-    const filters: any = {}
-
+    // Create a new URLSearchParams instance
+    const params = new URLSearchParams()
+    
+    // Add parameters only if they have values
     if (minPrice > 0) {
-      filters.minPrice = minPrice
+      params.set('minPrice', minPrice.toString())
     }
-
+    
     if (selectedMaxPrice < maxPrice) {
-      filters.maxPrice = selectedMaxPrice
+      params.set('maxPrice', selectedMaxPrice.toString())
     }
-
-    if (category) {
-      filters.category = category
+    
+    if (category && category !== "all") {
+      params.set('category', category)
     }
-
-    if (sort) {
-      filters.sort = sort
+    
+    if (sort && sort !== "default") {
+      params.set('sort', sort)
     }
-
-    onApplyFilters(filters)
+    
+    // Update the URL with the new filters
+    const newPath = params.toString() ? `/shop?${params.toString()}` : '/shop'
+    router.push(newPath)
     setFiltersChanged(false)
   }
 
@@ -135,7 +158,7 @@ export default function ProductFilters({ categories, maxPrice, onApplyFilters }:
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat} value={cat}>
                     {cat}
@@ -154,7 +177,7 @@ export default function ProductFilters({ categories, maxPrice, onApplyFilters }:
                 <SelectValue placeholder="Default" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Default</SelectItem>
+                <SelectItem value="default">Default</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
                 <SelectItem value="newest">Newest First</SelectItem>
