@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2, ArrowLeft, MessageSquare, Truck, CheckCircle, Package } from "lucide-react"
+import { Loader2, ArrowLeft, MessageSquare, Truck, CheckCircle, Package, Printer } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { formatCurrency, formatDate } from "@/lib/utils"
@@ -147,6 +147,10 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
     }
   }
   
+  const handlePrint = () => {
+    window.print()
+  }
+  
   if (loading) {
     return (
       <div className="container py-10">
@@ -194,13 +198,18 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
   
   return (
     <div className="container py-10">
-      <div className="flex items-center mb-6">
-        <Link href="/admin/orders">
-          <Button variant="outline" size="sm" className="mr-4">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Orders
-          </Button>
-        </Link>
-        <h1 className="text-2xl font-bold">Order Details</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Link href="/admin/orders">
+            <Button variant="outline" size="sm" className="mr-4">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back to Orders
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold">Order Details</h1>
+        </div>
+        <Button variant="outline" onClick={handlePrint}>
+          <Printer className="mr-2 h-4 w-4" /> Print
+        </Button>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -252,15 +261,48 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
                           )}
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium">{item.name}</div>
-                          {item.variant && <div className="text-sm text-muted-foreground">{item.variant}</div>}
-                          <div className="text-sm text-muted-foreground">
-                            Qty: {item.quantity} × {formatCurrency(item.price)}
+                          <h4 className="text-sm font-medium">{item.name}</h4>
+                          {item.variant && (
+                            <p className="text-xs text-muted-foreground">Variant: {item.variant}</p>
+                          )}
+                          <div className="flex justify-between mt-1">
+                            <p className="text-sm text-muted-foreground">
+                              {formatCurrency(item.price)} × {item.quantity}
+                            </p>
+                            <p className="text-sm font-medium">
+                              {formatCurrency(item.price * item.quantity)}
+                            </p>
                           </div>
                         </div>
-                        <div className="font-medium">{formatCurrency(item.price * item.quantity)}</div>
                       </div>
                     ))}
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                {/* Order Summary */}
+                <div>
+                  <h3 className="font-medium mb-3">Order Summary</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <p className="text-sm text-muted-foreground">Subtotal</p>
+                      <p className="text-sm">{formatCurrency(order.subtotal)}</p>
+                    </div>
+                    <div className="flex justify-between">
+                      <p className="text-sm text-muted-foreground">Shipping</p>
+                      <p className="text-sm">{formatCurrency(order.shippingCost)}</p>
+                    </div>
+                    {order.discount > 0 && (
+                      <div className="flex justify-between">
+                        <p className="text-sm text-muted-foreground">Discount</p>
+                        <p className="text-sm text-green-600">-{formatCurrency(order.discount)}</p>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-medium">
+                      <p>Total</p>
+                      <p>{formatCurrency(order.total)}</p>
+                    </div>
                   </div>
                 </div>
                 
@@ -270,50 +312,24 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
                 <div>
                   <h3 className="font-medium mb-2">Shipping Address</h3>
                   <div className="text-sm text-muted-foreground">
-                    <p>{order.shippingAddress.name}</p>
-                    <p>{order.shippingAddress.address}</p>
-                    <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
+                    <p>{order.shippingAddress.street}</p>
+                    <p>
+                      {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+                      {order.shippingAddress.zipCode}
+                    </p>
                     <p>{order.shippingAddress.country}</p>
                   </div>
                 </div>
                 
-                <Separator />
-                
-                {/* Payment Info */}
+                {/* Payment Information */}
                 <div>
                   <h3 className="font-medium mb-2">Payment Information</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground mb-1">Payment Status</p>
-                      <Badge variant={order.paymentStatus === "completed" ? "default" : "destructive"}>
-                        {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground mb-1">Payment ID</p>
-                      <p className="font-mono text-xs">{order.paymentId || "N/A"}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                {/* Order Summary */}
-                <div>
-                  <h3 className="font-medium mb-2">Order Summary</h3>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Subtotal</span>
-                      <span>{formatCurrency(order.totalAmount - 500)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Shipping</span>
-                      <span>{formatCurrency(500)}</span>
-                    </div>
-                    <div className="flex justify-between font-medium mt-2">
-                      <span>Total</span>
-                      <span>{formatCurrency(order.totalAmount)}</span>
-                    </div>
+                  <div className="text-sm text-muted-foreground">
+                    <p><span className="font-medium">Method:</span> {order.paymentMethod}</p>
+                    <p><span className="font-medium">Status:</span> {order.paymentStatus}</p>
+                    {order.transactionId && (
+                      <p><span className="font-medium">Transaction ID:</span> {order.transactionId}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -325,67 +341,74 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
           {/* Status Update Card */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-lg">Update Order Status</CardTitle>
+              <CardTitle className="text-xl">Update Status</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="processing">Processing</SelectItem>
-                      <SelectItem value="shipped">Shipped</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Button
-                  onClick={handleStatusUpdate}
-                  disabled={!selectedStatus || selectedStatus === order.orderStatus || statusUpdateLoading}
-                  className="w-full"
-                >
-                  {statusUpdateLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Update Status
-                </Button>
-              </div>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="processing">Processing</SelectItem>
+                  <SelectItem value="shipped">Shipped</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
             </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full" 
+                disabled={statusUpdateLoading || selectedStatus === order.orderStatus}
+                onClick={handleStatusUpdate}
+              >
+                {statusUpdateLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : "Update Status"}
+              </Button>
+            </CardFooter>
           </Card>
           
-          {/* Admin Comment Card */}
+          {/* Admin Notes Card */}
           <Card>
             <CardHeader>
-              <div className="flex items-center">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                <CardTitle className="text-lg">Customer Comment</CardTitle>
-              </div>
+              <CardTitle className="text-xl">Admin Notes</CardTitle>
               <CardDescription>
-                Add a comment for the customer
+                Add private notes about this order
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <Textarea 
-                  placeholder="Enter a comment or message for the customer..."
-                  value={adminComment}
-                  onChange={(e) => setAdminComment(e.target.value)}
-                  className="min-h-[120px]"
-                />
-                
-                <Button
-                  onClick={handleCommentUpdate}
-                  disabled={!adminComment.trim() || adminComment === order.adminComment || commentLoading}
-                  className="w-full"
-                >
-                  {commentLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Comment
-                </Button>
-              </div>
+              <Textarea 
+                value={adminComment} 
+                onChange={(e) => setAdminComment(e.target.value)}
+                rows={4}
+                placeholder="Add notes about this order"
+              />
             </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full"
+                variant="outline"
+                disabled={commentLoading || adminComment === (order.adminComment || "")}
+                onClick={handleCommentUpdate}
+              >
+                {commentLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Save Notes
+                  </>
+                )}
+              </Button>
+            </CardFooter>
           </Card>
         </div>
       </div>
