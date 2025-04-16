@@ -206,7 +206,7 @@ export default function CheckoutPage() {
           description: "Your order has been placed and will be delivered soon.",
         })
         clearCart()
-        router.push(`/account/orders`)
+        router.push(`/order-confirmation/${order._id}`)
       }
     } catch (error) {
       console.error("Checkout error:", error)
@@ -222,48 +222,125 @@ export default function CheckoutPage() {
 
   const handleRazorpayPayment = async (order: any) => {
     try {
-      await loadRazorpay()
+      // Load Razorpay script
+      await loadRazorpay();
+      console.log("Razorpay script loaded successfully");
+
+      // First, check order structure
+      console.log("Order structure to process:", {
+        id: order._id,
+        totalAmount: order.totalAmount || order.total || 'not available',
+        hasItems: Array.isArray(order.items) && order.items.length > 0
+      });
 
       // Fetch the Razorpay key from the API
+      console.log("Fetching Razorpay key...");
       const keyResponse = await fetch("/api/payments/key");
+      
       if (!keyResponse.ok) {
-        throw new Error("Failed to fetch Razorpay key");
+        const errorData = await keyResponse.json();
+        console.error("Failed to fetch Razorpay key:", keyResponse.status, errorData);
+        throw new Error(`Failed to fetch Razorpay key: ${keyResponse.status} ${keyResponse.statusText}`);
       }
-      const { key } = await keyResponse.json();
+      
+      const keyData = await keyResponse.json();
+      console.log("Received key response:", keyData.key ? "Key available" : "No key in response");
 
-      if (!key) {
+      if (!keyData.key) {
+        // Try getting debug info
+        try {
+          const debugResponse = await fetch("/api/payments/debug");
+          const debugData = await debugResponse.json();
+          console.error("Debug data for missing key:", debugData);
+        } catch (e) {
+          console.error("Could not fetch debug data:", e);
+        }
         throw new Error("Razorpay key not available");
       }
 
+      console.log("Creating Razorpay order...");
+      
+      // Create a Razorpay order for the payment
+      const orderResponse = await fetch("/api/payments/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId: order._id }),
+      });
+
+      // Log response status
+      console.log(`Order creation response status: ${orderResponse.status} ${orderResponse.statusText}`);
+      
+      // Try to get the response body whether it's an error or success
+      let responseBody;
+      try {
+        responseBody = await orderResponse.json();
+        console.log("Order creation response body:", responseBody);
+      } catch (parseError) {
+        console.error("Could not parse response body:", parseError);
+      }
+      
+      if (!orderResponse.ok) {
+        // Generate a clear error message
+        let errorMessage = `Failed to create payment order (Status: ${orderResponse.status})`;
+        if (responseBody && responseBody.error) {
+          errorMessage += `: ${responseBody.error}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // If we didn't get a body earlier, try again
+      if (!responseBody) {
+        responseBody = await orderResponse.json();
+      }
+
+      // Validate that we have required fields
+      if (!responseBody.orderId || !responseBody.amount) {
+        console.error("Invalid payment order response:", responseBody);
+        throw new Error("Invalid payment order response from server");
+      }
+
+      console.log("Payment order created successfully:", {
+        orderId: responseBody.orderId,
+        amount: responseBody.amount,
+        currency: responseBody.currency
+      });
+
       const options = {
-        key: key,
-        amount: order.total * 100, // Razorpay expects amount in paise
-        currency: "INR",
+        key: keyData.key,
+        amount: responseBody.amount, // Use the amount from the Razorpay order
+        currency: responseBody.currency || "INR",
         name: "Emerald Gold",
-        description: `Order #${order._id}`,
-        order_id: order.razorpayOrderId,
+        description: `Order #${order._id.toString().substring(0, 8).toUpperCase()}`,
+        order_id: responseBody.orderId,
         handler: async (response: any) => {
-          console.log("Razorpay response:", response);
+          console.log("Razorpay payment callback received:", response);
           
           try {
             // Verify payment on the server
+            console.log("Verifying payment...");
             const result = await fetch("/api/payments/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 orderId: order._id,
                 razorpayPaymentId: response.razorpay_payment_id,
-                // Only include these fields if they exist in the response
-                ...(response.razorpay_order_id && { razorpayOrderId: response.razorpay_order_id }),
-                ...(response.razorpay_signature && { razorpaySignature: response.razorpay_signature }),
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
               }),
             });
 
+            console.log(`Payment verification response: ${result.status} ${result.statusText}`);
+            
             if (!result.ok) {
-              throw new Error(`Server returned ${result.status}: ${result.statusText}`);
+              const errorText = await result.text().catch(() => "Could not read error details");
+              console.error(`Payment verification failed: ${result.status}, Error: ${errorText}`);
+              throw new Error(`Server returned ${result.status}: ${errorText}`);
             }
 
             const data = await result.json();
+            console.log("Payment verification result:", data);
 
             if (data.success) {
               toast({
@@ -271,8 +348,8 @@ export default function CheckoutPage() {
                 description: "Your order has been placed and will be delivered soon.",
               });
               clearCart();
-              // Redirect to orders page instead of order confirmation
-              router.push(`/account/orders`);
+              // Redirect to order confirmation page
+              router.push(`/order-confirmation/${order._id}`);
             } else {
               console.error("Payment verification error:", data);
               toast({

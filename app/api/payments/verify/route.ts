@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { updatePaymentStatus, getOrderById } from "@/lib/orders"
 import { verifyPayment } from "@/lib/razorpay"
+import { sendOrderConfirmationEmail } from "@/lib/email"
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,6 +38,15 @@ export async function POST(req: NextRequest) {
     
     // Get the updated order
     const updatedOrder = await getOrderById(orderId)
+    
+    // Send order confirmation email
+    try {
+      await sendOrderConfirmationEmail(updatedOrder)
+      console.log("Order confirmation email sent successfully")
+    } catch (emailError) {
+      console.error("Error sending order confirmation email:", emailError)
+      // Continue with the response even if email fails
+    }
     
     return NextResponse.json({ 
       success: true, 

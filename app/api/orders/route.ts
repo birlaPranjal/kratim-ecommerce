@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-options"
-import { createOrder, getOrders, getOrderById } from "@/lib/orders"
+import { Order , createOrder, getOrders } from "@/lib/orders"
 import { addOrderToUser } from "@/lib/users"
-import { z } from "zod"
+import { sendOrderConfirmationEmail } from "@/lib/email"
+
 
 // GET - Retrieve all orders (admin only)
 export async function GET(req: NextRequest) {
@@ -69,8 +70,8 @@ export async function POST(req: NextRequest) {
         postalCode: body.customer.postalCode,
         country: body.customer.country,
       },
-      paymentStatus: "pending",
-      orderStatus: "processing",
+      paymentStatus: "pending" as const,
+      orderStatus: "processing" as const,
       notes: body.notes || "",
     }
     
@@ -79,32 +80,23 @@ export async function POST(req: NextRequest) {
     // Associate the order with the user
     await addOrderToUser(session.user.id, order._id.toString())
     
+    // If payment method is Cash on Delivery (COD), send confirmation email immediately
+    if (body.paymentMethod === "cod") {
+      try {
+        await sendOrderConfirmationEmail(order as Order) // Ensure order is of type Order
+        console.log("COD order confirmation email sent")
+      } catch (emailError: unknown) { // Specify the type of emailError
+        console.error("Error sending COD order confirmation email:", emailError)
+        // Continue even if email fails
+      }
+    }
+    
     // If using Razorpay, create a Razorpay order
     if (body.paymentMethod === "razorpay") {
-      // Import dynamically to avoid issues with server components
-      const { createRazorpayOrder } = await import("@/lib/razorpay")
-      
-      try {
-        const razorpayOrder = await createRazorpayOrder({
-          amount: order.totalAmount,
-          receipt: order._id.toString(),
-          notes: {
-            orderId: order._id.toString(),
-            customerName: `${body.customer.firstName} ${body.customer.lastName}`.trim(),
-            customerEmail: body.customer.email,
-          },
-        })
-        
-        // Add Razorpay order ID to the order
-        return NextResponse.json({
-          ...order,
-          razorpayOrderId: razorpayOrder.id,
-        })
-      } catch (razorpayError) {
-        console.error("Error creating Razorpay order:", razorpayError)
-        // Return the order even if Razorpay creation fails
-        return NextResponse.json(order)
-      }
+      // We'll create the Razorpay order via the create-order endpoint
+      // Just return the order directly
+      console.log("Order created, Razorpay payment will be initiated from client")
+      return NextResponse.json(order)
     }
     
     return NextResponse.json(order)

@@ -64,4 +64,27 @@ export function verifyPaymentSignature(
 
 export function getPublicKey() {
   return process.env.RAZORPAY_KEY_ID
+}
+
+// Add the missing verifyPayment function
+export async function verifyPayment({
+  razorpayOrderId,
+  razorpayPaymentId,
+  razorpaySignature
+}: {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}) {
+  try {
+    // Verify the payment signature
+    return verifyPaymentSignature(
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature
+    );
+  } catch (error) {
+    console.error("Error verifying payment:", error);
+    return false;
+  }
 } 
