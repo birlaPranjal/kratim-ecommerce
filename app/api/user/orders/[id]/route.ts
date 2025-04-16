@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth-options"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
   try {
     // Check if user is authenticated
@@ -18,7 +18,11 @@ export async function GET(
       )
     }
 
-    const order = await getOrderById(params.id)
+    // Unwrap params if it's a promise
+    const unwrappedParams = params instanceof Promise ? await params : params
+    const orderId = unwrappedParams.id
+
+    const order = await getOrderById(orderId)
 
     if (!order) {
       return NextResponse.json(
@@ -29,7 +33,7 @@ export async function GET(
 
     // Check if the user is admin or the order belongs to the user
     if (
-      session.user.role !== "admin" && 
+      session.user.role !== "admin" &&
       order.user._id.toString() !== session.user.id
     ) {
       return NextResponse.json(
@@ -71,7 +75,7 @@ export async function GET(
 
     return NextResponse.json(transformedOrder)
   } catch (error) {
-    console.error("Error fetching order:", error)
+    console.error("Error fetching order details:", error)
     return NextResponse.json(
       { error: "Failed to fetch order" },
       { status: 500 }

@@ -115,52 +115,76 @@ export default function CartPage() {
                   {cart.indexOf(item) < cart.length - 1 && <Separator className="my-6" />}
                 </div>
               ))}
+
+              <Separator className="my-6" />
+
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  onClick={clearCart}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 size={16} />
+                  Clear Cart
+                </Button>
+
+                <Button asChild variant="outline" className="flex items-center gap-2">
+                  <Link href="/shop">
+                    <ShoppingBag size={16} />
+                    Continue Shopping
+                  </Link>
+                </Button>
+              </div>
             </div>
-          </div>
-
-          <div className="mt-6 flex justify-between">
-            <Button variant="outline" asChild>
-              <Link href="/shop">Continue Shopping</Link>
-            </Button>
-
-            <Button variant="ghost" onClick={clearCart} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-              Clear Cart
-            </Button>
           </div>
         </div>
 
         <div className="lg:col-span-1">
-          <div className="rounded-lg border p-6">
-            <h2 className="text-lg font-medium mb-4">Order Summary</h2>
+          <div className="rounded-lg border p-6 sticky top-24">
+            <h2 className="text-xl font-serif font-bold mb-4">Order Summary</h2>
 
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Subtotal</span>
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotal</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-500">Shipping</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Shipping</span>
                 <span>{formatCurrency(shipping)}</span>
               </div>
-
-              <Separator />
-
+              <Separator className="my-2" />
               <div className="flex justify-between font-medium">
                 <span>Total</span>
                 <span>{formatCurrency(total)}</span>
               </div>
+            </div>
 
-              <div className="pt-4">
-                <div className="flex gap-2 mb-4">
-                  <Input placeholder="Coupon code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
-                  <Button variant="outline">Apply</Button>
-                </div>
-
-                <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handleCheckout}>
-                  Checkout <ArrowRight size={16} className="ml-2" />
-                </Button>
+            <div className="space-y-4 mt-6">
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Coupon code"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  className="flex-1"
+                />
+                <Button variant="outline" disabled={!couponCode}>Apply</Button>
               </div>
+
+              <Button 
+                onClick={handleCheckout} 
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 flex items-center justify-center gap-2"
+                size="lg"
+              >
+                Proceed to Checkout
+                <ArrowRight size={16} />
+              </Button>
+              
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/shop">
+                  <ShoppingBag className="mr-2 h-4 w-4" />
+                  Continue Shopping
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

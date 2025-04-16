@@ -287,11 +287,20 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <p className="text-sm text-muted-foreground">Subtotal</p>
-                      <p className="text-sm">{formatCurrency(order.subtotal)}</p>
+                      <p className="text-sm">
+                        {formatCurrency(
+                          order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+                        )}
+                      </p>
                     </div>
                     <div className="flex justify-between">
                       <p className="text-sm text-muted-foreground">Shipping</p>
-                      <p className="text-sm">{formatCurrency(order.shippingCost)}</p>
+                      <p className="text-sm">
+                        {formatCurrency(
+                          (order.totalAmount || order.total || 0) - 
+                          order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+                        )}
+                      </p>
                     </div>
                     {order.discount > 0 && (
                       <div className="flex justify-between">
@@ -301,7 +310,7 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
                     )}
                     <div className="flex justify-between font-medium">
                       <p>Total</p>
-                      <p>{formatCurrency(order.total)}</p>
+                      <p>{formatCurrency(order.totalAmount || order.total || 0)}</p>
                     </div>
                   </div>
                 </div>
@@ -325,10 +334,58 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
                 <div>
                   <h3 className="font-medium mb-2">Payment Information</h3>
                   <div className="text-sm text-muted-foreground">
-                    <p><span className="font-medium">Method:</span> {order.paymentMethod}</p>
-                    <p><span className="font-medium">Status:</span> {order.paymentStatus}</p>
-                    {order.transactionId && (
-                      <p><span className="font-medium">Transaction ID:</span> {order.transactionId}</p>
+                    <p><span className="font-medium">Method:</span> {order.paymentMethod || 'Standard'}</p>
+                    <div className="flex items-center justify-between">
+                      <p>
+                        <span className="font-medium">Status:</span>{' '}
+                        <Badge variant={order.paymentStatus === "completed" ? "success" : "outline"}>
+                          {order.paymentStatus === "completed" ? "Paid" : "Pending"}
+                        </Badge>
+                      </p>
+                      
+                      {order.paymentStatus === "pending" && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-green-600 border-green-600 hover:bg-green-50"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/admin/orders/${orderId}/payment`, {
+                                method: "PATCH",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                  paymentStatus: "completed"
+                                }),
+                              });
+                              
+                              if (!response.ok) throw new Error("Failed to update payment status");
+                              
+                              const data = await response.json();
+                              setOrder(data.order);
+                              
+                              toast({
+                                title: "Success",
+                                description: "Payment marked as completed",
+                              });
+                            } catch (error) {
+                              console.error("Error updating payment status:", error);
+                              toast({
+                                title: "Error",
+                                description: "Failed to update payment status",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        >
+                          Mark as Paid
+                        </Button>
+                      )}
+                    </div>
+
+                    {order.paymentId && (
+                      <p><span className="font-medium">Payment ID:</span> {order.paymentId}</p>
                     )}
                   </div>
                 </div>
