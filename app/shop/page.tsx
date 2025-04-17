@@ -15,6 +15,7 @@ interface Product extends ProductType {
 
 interface SearchParamsProps {
   category?: string;
+  collection?: string;
   sort?: string;
   minPrice?: string;
   maxPrice?: string;
@@ -41,12 +42,14 @@ export default async function ShopPage({
   const params = await Promise.resolve(searchParams);
   
   const categoryParam = String(params.category || 'all');
+  const collectionParam = String(params.collection || 'all');
   const sortParam = String(params.sort || 'default');
   const minPriceParam = String(params.minPrice || '0');
   const maxPriceParam = String(params.maxPrice || maxPrice.toString());
   
   // Prepare filtered params for query
   const category = categoryParam !== 'all' ? categoryParam : undefined;
+  const collection = collectionParam !== 'all' ? collectionParam : undefined;
   const sort = sortParam !== 'default' ? sortParam : undefined;
   const minPrice = parseInt(minPriceParam);
   const maxPriceValue = parseInt(maxPriceParam);
@@ -54,6 +57,7 @@ export default async function ShopPage({
   // Filter products based on search params
   const products = await getProducts({ 
     category, 
+    collection,
     sort, 
     minPrice: isNaN(minPrice) ? undefined : minPrice, 
     maxPrice: isNaN(maxPriceValue) ? undefined : maxPriceValue 
@@ -62,6 +66,7 @@ export default async function ShopPage({
   // Create an object with the current filter values to pass to the client component
   const currentFilters = {
     category: categoryParam,
+    collection: collectionParam,
     sort: sortParam,
     minPrice: isNaN(minPrice) ? 0 : minPrice,
     maxPrice: isNaN(maxPriceValue) ? maxPrice : maxPriceValue

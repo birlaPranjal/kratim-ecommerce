@@ -14,7 +14,7 @@ export interface Collection {
 
 export async function getCollections() {
   const { db } = await connectToDatabase()
-  const collections = await db.collection("collections").find().sort({ createdAt: -1 }).toArray()
+  const collections = await db.collection("collections").find().sort({ name: 1 }).toArray()
   return JSON.parse(JSON.stringify(collections))
 }
 
@@ -40,6 +40,46 @@ export async function getFeaturedCollections(limit = 3) {
   return JSON.parse(JSON.stringify(collections))
 }
 
+export async function createCollection(collectionData: Omit<Collection, "_id" | "createdAt" | "updatedAt">) {
+  const { db } = await connectToDatabase()
+  
+  const now = new Date()
+  const newCollection = {
+    ...collectionData,
+    createdAt: now,
+    updatedAt: now
+  }
+  
+  const result = await db.collection("collections").insertOne(newCollection)
+  
+  return {
+    ...newCollection,
+    _id: result.insertedId.toString()
+  }
+}
+
+export async function updateCollection(id: string, collectionData: Partial<Omit<Collection, "_id" | "createdAt">>) {
+  const { db } = await connectToDatabase()
+  
+  const updateData = {
+    ...collectionData,
+    updatedAt: new Date()
+  }
+  
+  await db.collection("collections").updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updateData }
+  )
+  
+  return await getCollectionById(id)
+}
+
+export async function deleteCollection(id: string) {
+  const { db } = await connectToDatabase()
+  await db.collection("collections").deleteOne({ _id: new ObjectId(id) })
+  return { success: true }
+}
+
 export async function getProductsByCollection(collectionSlug: string) {
   const { db } = await connectToDatabase()
   const collection = await getCollectionBySlug(collectionSlug)
@@ -50,7 +90,7 @@ export async function getProductsByCollection(collectionSlug: string) {
   
   const products = await db
     .collection("products")
-    .find({ category: collection.name })
+    .find({ collection: collection._id })
     .toArray()
   
   return JSON.parse(JSON.stringify(products))

@@ -19,47 +19,92 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { X } from "lucide-react"
+import { X, Trash2, ArrowLeft } from "lucide-react"
 import ImageUpload from "@/components/admin/image-upload"
+import Link from "next/link"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
-export default function NewProductPage() {
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  compareAtPrice?: number;
+  category: string;
+  collection?: string;
+  inventory: number;
+  material?: string;
+  dimensions?: string;
+  featured: boolean;
+  images: string[];
+  features: string[];
+}
+
+export default function EditProductPage({ params }: { params: { id: string } }) {
   const { toast } = useToast()
   const router = useRouter()
+  const { id } = params
 
   const [categories, setCategories] = useState<Array<{_id: string, name: string}>>([])
   const [collections, setCollections] = useState<Array<{_id: string, name: string}>>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Product>({
+    _id: "",
     name: "",
     description: "",
-    price: "",
-    compareAtPrice: "",
+    price: 0,
+    compareAtPrice: 0,
     category: "",
     collection: "",
-    inventory: "0",
+    inventory: 0,
     material: "",
     dimensions: "",
     featured: false,
-    images: [] as string[],
-    features: [""] as string[],
+    images: [],
+    features: [""],
   })
 
   useEffect(() => {
-    const fetchCategoriesAndCollections = async () => {
+    const fetchData = async () => {
       setIsLoading(true)
       try {
-        const [categoriesRes, collectionsRes] = await Promise.all([
+        const [productRes, categoriesRes, collectionsRes] = await Promise.all([
+          fetch(`/api/products/${id}`),
           fetch('/api/categories'),
           fetch('/api/collections')
         ])
         
+        if (!productRes.ok) {
+          throw new Error("Failed to fetch product data")
+        }
+        
         if (categoriesRes.ok && collectionsRes.ok) {
-          const [categoriesData, collectionsData] = await Promise.all([
+          const [productData, categoriesData, collectionsData] = await Promise.all([
+            productRes.json(),
             categoriesRes.json(),
             collectionsRes.json()
           ])
+          
+          setFormData({
+            ...productData,
+            compareAtPrice: productData.compareAtPrice || 0,
+            material: productData.material || "",
+            dimensions: productData.dimensions || "",
+            features: productData.features?.length > 0 ? productData.features : [""],
+          })
           
           setCategories(categoriesData)
           setCollections(collectionsData)
@@ -68,20 +113,27 @@ export default function NewProductPage() {
         console.error("Error fetching data:", error)
         toast({
           title: "Error",
-          description: "Failed to load categories and collections.",
+          description: "Failed to load product data.",
           variant: "destructive",
         })
+        router.push("/admin/products")
       } finally {
         setIsLoading(false)
       }
     }
     
-    fetchCategoriesAndCollections()
-  }, [toast])
+    fetchData()
+  }, [toast, router, id])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+  
+  const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    const numValue = value === "" ? 0 : Number(value)
+    setFormData((prev) => ({ ...prev, [name]: numValue }))
   }
 
   const handleSelectChange = (name: string, value: string) => {
@@ -129,14 +181,12 @@ export default function NewProductPage() {
 
       const productData = {
         ...formData,
-        price: Number.parseFloat(formData.price),
-        compareAtPrice: formData.compareAtPrice ? Number.parseFloat(formData.compareAtPrice) : undefined,
-        inventory: Number.parseInt(formData.inventory),
         features: formData.features.filter((feature) => feature.trim() !== ""),
+        compareAtPrice: formData.compareAtPrice === 0 ? undefined : formData.compareAtPrice,
       }
 
-      const response = await fetch("/api/products", {
-        method: "POST",
+      const response = await fetch(`/api/products/${id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -144,20 +194,20 @@ export default function NewProductPage() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to create product")
+        throw new Error("Failed to update product")
       }
 
       toast({
-        title: "Product created",
-        description: "The product has been created successfully.",
+        title: "Product updated",
+        description: "The product has been updated successfully.",
       })
 
       router.push("/admin/products")
     } catch (error) {
-      console.error("Error creating product:", error)
+      console.error("Error updating product:", error)
       toast({
         title: "Error",
-        description: "There was an error creating the product. Please try again.",
+        description: "There was an error updating the product. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -165,9 +215,83 @@ export default function NewProductPage() {
     }
   }
 
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+
+      const response = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete product")
+      }
+
+      toast({
+        title: "Product deleted",
+        description: "The product has been deleted successfully.",
+      })
+
+      router.push("/admin/products")
+    } catch (error) {
+      console.error("Error deleting product:", error)
+      toast({
+        title: "Error",
+        description: "There was an error deleting the product. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-200 border-t-amber-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading product data...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Add New Product</h1>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <Button asChild variant="outline" size="icon">
+            <Link href="/admin/products">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <h1 className="text-3xl font-bold">Edit Product</h1>
+        </div>
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" disabled={isDeleting}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Product
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the product
+                from the database.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -177,7 +301,13 @@ export default function NewProductPage() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Product Name *</Label>
-                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
+                    <Input 
+                      id="name" 
+                      name="name" 
+                      value={formData.name} 
+                      onChange={handleInputChange} 
+                      required 
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -202,7 +332,7 @@ export default function NewProductPage() {
                         min="0"
                         step="0.01"
                         value={formData.price}
-                        onChange={handleInputChange}
+                        onChange={handleNumberInputChange}
                         required
                       />
                     </div>
@@ -214,8 +344,8 @@ export default function NewProductPage() {
                         type="number"
                         min="0"
                         step="0.01"
-                        value={formData.compareAtPrice}
-                        onChange={handleInputChange}
+                        value={formData.compareAtPrice || ""}
+                        onChange={handleNumberInputChange}
                       />
                     </div>
                   </div>
@@ -232,9 +362,7 @@ export default function NewProductPage() {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {isLoading ? (
-                            <SelectItem value="" disabled>Loading categories...</SelectItem>
-                          ) : categories.length > 0 ? (
+                          {categories.length > 0 ? (
                             categories.map((category) => (
                               <SelectItem key={category._id} value={category._id}>
                                 {category.name}
@@ -249,23 +377,20 @@ export default function NewProductPage() {
                     <div className="space-y-2">
                       <Label htmlFor="collection">Collection</Label>
                       <Select
-                        value={formData.collection}
+                        value={formData.collection || ""}
                         onValueChange={(value) => handleSelectChange("collection", value)}
                       >
                         <SelectTrigger id="collection">
                           <SelectValue placeholder="Select collection" />
                         </SelectTrigger>
                         <SelectContent>
-                          {isLoading ? (
-                            <SelectItem value="" disabled>Loading collections...</SelectItem>
-                          ) : collections.length > 0 ? (
+                          <SelectItem value="">None</SelectItem>
+                          {collections.length > 0 && (
                             collections.map((collection) => (
                               <SelectItem key={collection._id} value={collection._id}>
                                 {collection.name}
                               </SelectItem>
                             ))
-                          ) : (
-                            <SelectItem value="" disabled>No collections available</SelectItem>
                           )}
                         </SelectContent>
                       </Select>
@@ -282,7 +407,7 @@ export default function NewProductPage() {
                         min="0"
                         step="1"
                         value={formData.inventory}
-                        onChange={handleInputChange}
+                        onChange={handleNumberInputChange}
                       />
                     </div>
                     <div className="space-y-2">
@@ -385,7 +510,7 @@ export default function NewProductPage() {
                 className="w-full bg-amber-600 hover:bg-amber-700"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating..." : "Create Product"}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>
@@ -393,4 +518,4 @@ export default function NewProductPage() {
       </form>
     </div>
   )
-}
+} 

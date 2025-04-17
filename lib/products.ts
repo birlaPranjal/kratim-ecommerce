@@ -17,6 +17,7 @@ export interface Product {
 
 export async function getProducts({
   category,
+  collection,
   query,
   sort,
   minPrice,
@@ -25,6 +26,7 @@ export async function getProducts({
   skip = 0,
 }: {
   category?: string
+  collection?: string
   query?: string
   sort?: string
   minPrice?: number
@@ -39,6 +41,10 @@ export async function getProducts({
 
   if (category) {
     filter.category = category
+  }
+
+  if (collection) {
+    filter.collection = collection
   }
 
   if (query) {

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { BarChart3, Package, ShoppingCart, Users, Settings, LogOut } from "lucide-react"
+import { BarChart3, Package, ShoppingCart, Users, Settings, LogOut, Grid, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
 
@@ -20,6 +20,16 @@ export default function AdminSidebar() {
       title: "Products",
       href: "/admin/products",
       icon: Package,
+    },
+    {
+      title: "Categories",
+      href: "/admin/categories",
+      icon: Grid,
+    },
+    {
+      title: "Collections",
+      href: "/admin/collections",
+      icon: Layers,
     },
     {
       title: "Orders",
