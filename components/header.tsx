@@ -2,6 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, ShoppingCart, User, Menu, ChevronDown } from "lucide-react"
@@ -31,13 +32,30 @@ import {
 } from "@/components/ui/navigation-menu"
 import { cn } from "@/lib/utils"
 
+// Define TypeScript interfaces for category and collection
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+}
+
+interface Collection {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+}
+
 export default function Header() {
   const { cart } = useCart()
   const { user, signOut } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
-  const [categories, setCategories] = useState([])
-  const [collections, setCollections] = useState([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [collections, setCollections] = useState<Collection[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0)
@@ -77,11 +95,6 @@ export default function Header() {
     }
   }
 
-  // Main navigation items
-  const navItems = [
-    { name: "Home", href: "/" },
-  ]
-
   // Mobile drawer menu items
   const mobileNavItems = [
     { name: "Home", href: "/" },
@@ -92,25 +105,42 @@ export default function Header() {
     { name: "Contact", href: "/#contact" },
   ]
 
+  // Enhanced list item with image
   const ListItem = React.forwardRef<
     React.ElementRef<"a">,
-    React.ComponentPropsWithoutRef<"a">
-  >(({ className, title, children, ...props }, ref) => {
+    React.ComponentPropsWithoutRef<"a"> & { 
+      title: string; 
+      image?: string;
+    }
+  >(({ className, title, image, children, ...props }, ref) => {
     return (
       <li>
         <NavigationMenuLink asChild>
           <a
             ref={ref}
             className={cn(
-              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+              "flex gap-3 select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
               className
             )}
             {...props}
           >
-            <div className="text-sm font-medium leading-none">{title}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-              {children}
-            </p>
+            {image && (
+              <div className="w-12 h-12 rounded-md overflow-hidden relative flex-shrink-0">
+                <Image 
+                  src={image || "/placeholder.jpg"} 
+                  alt={title}
+                  width={48}
+                  height={48}
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <div className="space-y-1">
+              <div className="text-sm font-medium leading-none">{title}</div>
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                {children}
+              </p>
+            </div>
           </a>
         </NavigationMenuLink>
       </li>
@@ -120,12 +150,21 @@ export default function Header() {
 
   return (
     <header className="border-b bg-white sticky top-0 z-40">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
+      {/* Free Shipping Banner */}
+      <section className="bg-[#1d503a] text-white py-1 text-center">
+        <div className="container mx-auto px-1 sm:px-6 lg:px-8">
+          <p className="text-sm sm:text-base">
+            🚚 Free Shipping Anywhere in India for orders above ₹499
+          </p>
+        </div>
+      </section>
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center">
+          {/* Mobile menu trigger */}
+          <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
+                <Button variant="ghost" size="icon" className="mr-2">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle menu</span>
                 </Button>
@@ -133,7 +172,7 @@ export default function Header() {
               <SheetContent side="left" className="w-[300px]">
                 <div className="flex flex-col gap-6 py-6">
                   <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold">
-                    Emerald Gold
+                    <img src="/logo.png" alt="Kratim" className="h-12" />
                   </Link>
 
                   <form onSubmit={handleSearch} className="relative">
@@ -148,7 +187,7 @@ export default function Header() {
 
                   <nav className="flex flex-col gap-2">
                     {mobileNavItems.map((link) => (
-                      <Link key={link.name} href={link.href} className="py-2 text-gray-700 hover:text-amber-600">
+                      <Link key={link.name} href={link.href} className="py-2 text-gray-700 hover:text-[#1d503a]">
                         {link.name}
                       </Link>
                     ))}
@@ -165,23 +204,23 @@ export default function Header() {
                           <span className="text-sm font-medium">{user.name}</span>
                         </div>
                         {user.role === "admin" && (
-                          <Link href="/admin" className="py-2 text-gray-700 hover:text-amber-600">
+                          <Link href="/admin" className="py-2 text-gray-700 hover:text-[#1d503a]">
                             Admin Dashboard
                           </Link>
                         )}
-                        <Link href="/account" className="py-2 text-gray-700 hover:text-amber-600">
+                        <Link href="/account" className="py-2 text-gray-700 hover:text-[#1d503a]">
                           My Account
                         </Link>
-                        <button onClick={() => signOut()} className="py-2 text-left text-gray-700 hover:text-amber-600">
+                        <button onClick={() => signOut()} className="py-2 text-left text-gray-700 hover:text-[#1d503a]">
                           Sign Out
                         </button>
                       </>
                     ) : (
                       <>
-                        <Link href="/auth/signin" className="py-2 text-gray-700 hover:text-amber-600">
+                        <Link href="/auth/signin" className="py-2 text-gray-700 hover:text-[#1d503a]">
                           Sign In
                         </Link>
-                        <Link href="/auth/signup" className="py-2 text-gray-700 hover:text-amber-600">
+                        <Link href="/auth/signup" className="py-2 text-gray-700 hover:text-[#1d503a]">
                           Register
                         </Link>
                       </>
@@ -190,13 +229,19 @@ export default function Header() {
                 </div>
               </SheetContent>
             </Sheet>
+          </div>
 
+          {/* Logo */}
+          <div className="flex-shrink-0">
             <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold">
-              Emerald Gold
+              <img src="/logo.png" alt="Kratim" className="h-12" />
             </Link>
+          </div>
 
-            <NavigationMenu className="ml-10 hidden md:flex">
-              <NavigationMenuList>
+          {/* Centered Navigation */}
+          <div className="hidden md:flex justify-center flex-1">
+            <NavigationMenu className="mx-auto">
+              <NavigationMenuList className="gap-1">
                 <NavigationMenuItem>
                   <Link href="/" legacyBehavior passHref>
                     <NavigationMenuLink className={navigationMenuTriggerStyle()}>
@@ -216,28 +261,21 @@ export default function Header() {
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    <ul className="grid w-[600px] gap-3 p-4 md:grid-cols-2">
                       {isLoading ? (
                         <li className="col-span-2 p-4 text-center">Loading categories...</li>
                       ) : categories.length > 0 ? (
                         <>
-                          {categories.slice(0, 3).map((category) => (
+                          {categories.map((category) => (
                             <ListItem
                               key={category._id}
                               title={category.name}
                               href={`/categories/${category.slug}`}
+                              image={category.image || "/placeholder.jpg"}
                             >
                               {category.description?.substring(0, 60) || "Shop our beautiful collection"}
                             </ListItem>
                           ))}
-                          <li className="col-span-2 mt-3 border-t pt-3 text-center">
-                            <Link 
-                              href="/categories" 
-                              className="text-sm font-medium text-amber-600 hover:text-amber-800"
-                            >
-                              View All Categories →
-                            </Link>
-                          </li>
                         </>
                       ) : (
                         <li className="col-span-2 p-4 text-center">No categories available</li>
@@ -249,28 +287,21 @@ export default function Header() {
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Collections</NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    <ul className="grid w-[600px] gap-3 p-4 md:grid-cols-2">
                       {isLoading ? (
                         <li className="col-span-2 p-4 text-center">Loading collections...</li>
                       ) : collections.length > 0 ? (
                         <>
-                          {collections.slice(0, 6).map((collection) => (
+                          {collections.map((collection) => (
                             <ListItem
                               key={collection._id}
                               title={collection.name}
                               href={`/collections/${collection.slug}`}
+                              image={collection.image || "/placeholder.jpg"}
                             >
                               {collection.description?.substring(0, 60) || "Explore our curated collection"}
                             </ListItem>
                           ))}
-                          <li className="col-span-2 mt-3 border-t pt-3 text-center">
-                            <Link 
-                              href="/collections" 
-                              className="text-sm font-medium text-amber-600 hover:text-amber-800"
-                            >
-                              View All Collections →
-                            </Link>
-                          </li>
                         </>
                       ) : (
                         <li className="col-span-2 p-4 text-center">No collections available</li>
@@ -298,7 +329,8 @@ export default function Header() {
             </NavigationMenu>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Right side items */}
+          <div className="flex items-center gap-4 ml-auto">
             <form onSubmit={handleSearch} className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
@@ -361,7 +393,7 @@ export default function Header() {
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemsCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-xs font-medium text-white">
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#c8a25d] text-xs font-medium text-white">
                     {cartItemsCount}
                   </span>
                 )}

@@ -33,16 +33,16 @@ const features: Feature[] = [
 
 export default function FeaturesSection() {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-background">
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (
             <div key={index} className="flex flex-col items-center text-center p-6">
-              <div className="bg-amber-100 p-4 rounded-full mb-4 text-amber-600">
+              <div className="bg-primary/10 p-4 rounded-full mb-4 text-primary">
                 {feature.icon}
               </div>
-              <h3 className="text-lg font-medium mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
+              <h3 className="text-lg font-medium mb-2 font-serif">{feature.title}</h3>
+              <p className="text-foreground">{feature.description}</p>
             </div>
           ))}
         </div>

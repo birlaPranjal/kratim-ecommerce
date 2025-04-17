@@ -16,30 +16,23 @@ export default async function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative h-[500px] sm:h-[600px] lg:h-[700px] w-full overflow-hidden">
-        <div className="absolute inset-0 bg-black/40 z-10" />
+      <section className="relative h-[400px] sm:h-[450px] lg:h-[500px] w-full overflow-hidden">
+        <div className="absolute inset-0 z-10" />
         <Image 
-          src="https://placehold.co/1920x1080/gold/white?text=Luxury+Jewelry" 
-          alt="Luxury Jewelry" 
+          src="/banner/Kratim Banner.png" 
+          alt="Kratim Luxury Jewelry" 
           fill 
-          className="object-cover" 
+          className="h-[550px]" 
           priority 
         />
-        <div className="relative z-20 h-full flex flex-col justify-center items-center text-center text-white px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold mb-4 max-w-4xl">
-            Timeless Luxury Jewelry
-          </h1>
-          <p className="text-lg sm:text-xl mb-8 max-w-2xl text-gray-100">
-            Discover craftsmanship and elegant designs.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button asChild className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-6 text-lg">
-              <Link href="/collections">Explore Collections</Link>
-            </Button>
-            <Button asChild variant="outline" className="bg-transparent text-white border-white hover:bg-white/10 px-8 py-6 text-lg">
-              <Link href="/shop">Shop Now</Link>
-            </Button>
-          </div>
+      </section>
+
+      {/* Tagline Section */}
+      <section className="w-full bg-white py-10 sm:py-12 lg:py-14 text-center">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl text-[#1d503a] font-bold" style={{ fontFamily: '"Playfair Display", serif', letterSpacing: '0.02em' }}>
+            Kratim – Bold. Timeless. Unapologetically You.
+          </h2>
         </div>
       </section>
 
@@ -50,23 +43,22 @@ export default async function Home() {
       <section className="py-12 sm:py-16 lg:py-24 bg-gray-50">
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold mb-4">
-              Explore Our Finest Pieces
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold mb-4 text-[#1d503a]">
+              Featured Products
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Each piece is carefully designed and crafted to create a timeless statement of elegance and
-              sophistication.
+              Each piece is carefully designed and crafted to create a timeless statement of elegance
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-            {featuredProducts.map((product) => (
+            {featuredProducts.map((product: Product) => (
               <ProductCard key={product._id} product={product} />
             ))}
           </div>
 
           <div className="mt-12 text-center">
-            <Button asChild className="bg-amber-600 hover:bg-amber-700 px-8 py-6 text-lg">
+            <Button asChild className="bg-[#1d503a] hover:bg-[#1d503a]/90 text-white px-8 py-6 text-lg">
               <Link href="/shop" className="flex items-center gap-2">
                 View All Products <ArrowRight size={20} />
               </Link>
@@ -83,8 +75,8 @@ export default async function Home() {
         <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h3 className="text-sm uppercase tracking-wider text-amber-600 mb-2">OUR STORY</h3>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold mb-6">
+              <h3 className="text-sm uppercase tracking-wider text-[#c8a25d] mb-2">OUR STORY</h3>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold mb-6 text-[#1d503a]">
                 The Art of Craftsmanship & Elegance
               </h2>
               <p className="text-gray-600 mb-6 text-lg">
@@ -96,34 +88,34 @@ export default async function Home() {
                 We stand for timeless art with contemporary designs, transforming every piece into a masterpiece.
                 Experience the journey from inspiration to perfection, where craftsmanship meets elegance.
               </p>
-              <Button asChild className="bg-amber-600 hover:bg-amber-700 px-8 py-6 text-lg">
+              <Button asChild className="bg-[#1d503a] hover:bg-[#1d503a]/90 text-white px-8 py-6 text-lg">
                 <Link href="/about">Discover More</Link>
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-4 sm:gap-6">
               <Image
-                src="https://placehold.co/600x600/gold/white?text=Craftsmanship+1"
+                src="/banner/Kratim Banner.png"
                 alt="Jewelry Craftsmanship"
                 width={300}
                 height={300}
                 className="rounded-lg object-cover h-full w-full"
               />
               <Image
-                src="https://placehold.co/600x600/gold/white?text=Craftsmanship+2"
+                src="/banner/Kratim Banner 1.png"
                 alt="Jewelry Detail"
                 width={300}
                 height={300}
                 className="rounded-lg object-cover h-full w-full mt-8"
               />
               <Image
-                src="https://placehold.co/600x600/gold/white?text=Craftsmanship+3"
+                src="/banner/Kratim Grid.png"
                 alt="Jewelry Making"
                 width={300}
                 height={300}
                 className="rounded-lg object-cover h-full w-full"
               />
               <Image
-                src="https://placehold.co/600x600/gold/white?text=Craftsmanship+4"
+                src="/banner/Kratim Banner.png"
                 alt="Finished Jewelry"
                 width={300}
                 height={300}

@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
@@ -10,12 +9,10 @@ import { CartProvider } from "@/lib/cart-context"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 
-const inter = Inter({ subsets: ["latin"] })
-
 export const metadata: Metadata = {
-  title: "Emerald Gold | Luxury Jewelry",
-  description: "Discover exquisite craftsmanship and elegant designs.",
-    generator: 'v0.dev'
+  title: "Kratim | Timeless Luxury Jewelry",
+  description: "Indulge in exquisite craftsmanship and elegant designs. Luxury jewelry collections made with finest materials.",
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -25,7 +22,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <head>
+        <link 
+          rel="stylesheet" 
+          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" 
+        />
+      </head>
+      <body>
         <AuthProvider>
           <AuthContextProvider>
             <CartProvider>
@@ -37,7 +40,7 @@ export default function RootLayout({
               >
                 <div className="flex min-h-screen flex-col">
                   <Header />
-                  <main className="flex-1 px-4 sm:px-6 lg:px-8 mx-auto w-full">
+                  <main className="flex-1 w-full">
                     {children}
                   </main>
                   <Footer />

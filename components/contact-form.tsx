@@ -63,31 +63,31 @@ export default function ContactForm() {
   }
 
   return (
-    <section id="contact" className="py-16 bg-white">
+    <section id="contact" className="py-16 bg-background">
       <div className="container mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-serif font-bold mb-4">Contact Us</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-serif font-bold mb-4 text-secondary">Contact Us</h2>
+          <p className="text-foreground max-w-2xl mx-auto">
             Have a question or need assistance? We'd love to hear from you.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div>
-            <h3 className="text-xl font-medium mb-6">Get in Touch</h3>
-            <p className="text-gray-600 mb-8">
+            <h3 className="text-xl font-serif font-medium mb-6 text-secondary">Get in Touch</h3>
+            <p className="text-foreground mb-8">
               We're here to help with any questions about our pieces, 
               custom orders, or anything else you need. Feel free to reach out.
             </p>
 
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <div className="bg-amber-100 p-3 rounded-full">
-                  <MapPin className="h-5 w-5 text-amber-600" />
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-medium">Our Store</h4>
-                  <address className="text-gray-600 not-italic">
+                  <address className="text-foreground not-italic">
                     123 Jewelry Lane, Gemstone District<br />
                     New York, NY 10001
                   </address>
@@ -95,22 +95,22 @@ export default function ContactForm() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="bg-amber-100 p-3 rounded-full">
-                  <Phone className="h-5 w-5 text-amber-600" />
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <Phone className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-medium">Phone</h4>
-                  <p className="text-gray-600">(212) 555-0123</p>
+                  <p className="text-foreground">(212) 555-0123</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="bg-amber-100 p-3 rounded-full">
-                  <AtSign className="h-5 w-5 text-amber-600" />
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <AtSign className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-medium">Email</h4>
-                  <p className="text-gray-600">contact@emeraldgold.com</p>
+                  <p className="text-foreground">contact@emeraldgold.com</p>
                 </div>
               </div>
             </div>
@@ -119,13 +119,13 @@ export default function ContactForm() {
           <div>
             {isSuccess ? (
               <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                <h3 className="text-xl font-medium text-green-800 mb-2">Message Sent!</h3>
+                <h3 className="text-xl font-serif font-medium text-green-800 mb-2">Message Sent!</h3>
                 <p className="text-green-700 mb-4">
                   Thank you for contacting us. We'll get back to you as soon as possible.
                 </p>
                 <Button 
                   onClick={() => setIsSuccess(false)}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   Send Another Message
                 </Button>
@@ -194,7 +194,7 @@ export default function ContactForm() {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-amber-600 hover:bg-amber-700"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Sending..." : "Send Message"}
