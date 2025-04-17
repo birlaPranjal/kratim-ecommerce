@@ -48,19 +48,43 @@ export async function createCategory(categoryData: Omit<Category, "_id" | "creat
 }
 
 export async function updateCategory(id: string, categoryData: Partial<Omit<Category, "_id" | "createdAt">>) {
-  const { db } = await connectToDatabase()
-  
-  const updateData = {
-    ...categoryData,
-    updatedAt: new Date()
+  try {
+    const { db } = await connectToDatabase()
+    
+    // Prepare update data by removing fields that should not be directly updated
+    const updateData = { ...categoryData };
+    
+    // Remove _id field if it exists to prevent MongoDB error
+    if ('_id' in updateData) {
+      delete updateData._id;
+    }
+    
+    // Remove createdAt if it exists since we shouldn't modify it
+    if ('createdAt' in updateData) {
+      delete updateData.createdAt;
+    }
+    
+    // Add updated timestamp
+    updateData.updatedAt = new Date();
+    
+    console.log(`Updating category ${id} with data:`, JSON.stringify(updateData, null, 2));
+    
+    const result = await db.collection("categories").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+    
+    console.log(`Update result:`, result);
+    
+    if (result.matchedCount === 0) {
+      throw new Error(`Category with ID ${id} not found`);
+    }
+    
+    return getCategoryById(id);
+  } catch (error) {
+    console.error("Error in updateCategory:", error);
+    throw error;
   }
-  
-  await db.collection("categories").updateOne(
-    { _id: new ObjectId(id) },
-    { $set: updateData }
-  )
-  
-  return await getCategoryById(id)
 }
 
 export async function deleteCategory(id: string) {

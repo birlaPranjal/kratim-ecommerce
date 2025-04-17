@@ -121,14 +121,38 @@ export async function createProduct(productData: Omit<Product, "_id" | "createdA
 }
 
 export async function updateProduct(id: string, productData: Partial<Omit<Product, "_id" | "createdAt" | "updatedAt">>) {
-  const { db } = await connectToDatabase()
-  
-  await db.collection("products").updateOne(
-    { _id: new ObjectId(id) },
-    { $set: { ...productData, updatedAt: new Date() } }
-  )
-  
-  return getProductById(id)
+  try {
+    const { db } = await connectToDatabase()
+    
+    // Prepare update data by removing fields that should not be directly updated
+    const updateData = { ...productData };
+    
+    // Remove _id field if it exists to prevent MongoDB error
+    if ('_id' in updateData) {
+      delete updateData._id;
+    }
+    
+    // Add updated timestamp
+    updateData.updatedAt = new Date();
+    
+    console.log(`Updating product ${id} with data:`, JSON.stringify(updateData, null, 2));
+    
+    const result = await db.collection("products").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+    
+    console.log(`Update result:`, result);
+    
+    if (result.matchedCount === 0) {
+      throw new Error(`Product with ID ${id} not found`);
+    }
+    
+    return getProductById(id);
+  } catch (error) {
+    console.error("Error in updateProduct:", error);
+    throw error;
+  }
 }
 
 export async function deleteProduct(id: string) {

@@ -11,20 +11,44 @@ import { useState } from "react"
 
 interface ImageUploadProps {
   images?: string[]
+  value?: string[]
   onChange: (images: string[]) => void
+  onImagesChange?: (images: string[]) => void
+  existingImages?: string[]
+  multiple?: boolean
   maxImages?: number
 }
 
-export default function ImageUpload({ images = [], onChange, maxImages = 5 }: ImageUploadProps) {
+export default function ImageUpload({ 
+  images = [], 
+  value = [], 
+  onChange, 
+  onImagesChange,
+  existingImages = [],
+  multiple = true,
+  maxImages = 5 
+}: ImageUploadProps) {
   const { toast } = useToast()
   const [isUploading, setIsUploading] = useState(false)
+  
+  // Support both naming conventions for flexibility
+  const imageList = existingImages.length > 0 
+    ? existingImages 
+    : value.length > 0 
+      ? value 
+      : images;
+  
+  const handleChange = (newImages: string[]) => {
+    onChange?.(newImages);
+    onImagesChange?.(newImages);
+  }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
 
     if (!files || files.length === 0) return
 
-    if (images.length + files.length > maxImages) {
+    if (imageList.length + files.length > maxImages) {
       toast({
         title: `Maximum ${maxImages} images allowed`,
         description: `You can only upload up to ${maxImages} images.`,
@@ -36,7 +60,7 @@ export default function ImageUpload({ images = [], onChange, maxImages = 5 }: Im
     setIsUploading(true)
 
     try {
-      const newImages = [...images]
+      const newImages = [...imageList]
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
@@ -56,7 +80,7 @@ export default function ImageUpload({ images = [], onChange, maxImages = 5 }: Im
         newImages.push(data.secure_url)
       }
 
-      onChange(newImages)
+      handleChange(newImages)
 
       toast({
         title: "Images uploaded",
@@ -75,17 +99,25 @@ export default function ImageUpload({ images = [], onChange, maxImages = 5 }: Im
   }
 
   const handleRemoveImage = (index: number) => {
-    const newImages = [...images]
+    const newImages = [...imageList]
     newImages.splice(index, 1)
-    onChange(newImages)
+    handleChange(newImages)
   }
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        {images.map((image, index) => (
+        {imageList.map((image, index) => (
           <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
-            <Image src={image || "/placeholder.svg"} alt={`Product image ${index + 1}`} fill className="object-cover" />
+            <Image 
+              src={image || "/placeholder.svg"} 
+              alt={`Product image ${index + 1}`} 
+              fill 
+              className="object-cover" 
+              onError={(e) => {
+                e.currentTarget.src = "/placeholder.svg";
+              }}
+            />
             <Button
               type="button"
               variant="destructive"
@@ -98,12 +130,12 @@ export default function ImageUpload({ images = [], onChange, maxImages = 5 }: Im
           </div>
         ))}
 
-        {images.length < maxImages && (
+        {imageList.length < maxImages && (
           <div className="relative aspect-square rounded-md border border-dashed flex flex-col items-center justify-center">
             <Input
               type="file"
               accept="image/*"
-              multiple
+              multiple={multiple}
               className="absolute inset-0 opacity-0 cursor-pointer"
               onChange={handleFileChange}
               disabled={isUploading}

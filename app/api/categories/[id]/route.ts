@@ -41,15 +41,40 @@ export async function PUT(
       )
     }
     
-    const categoryData = await request.json()
-    const category = await updateCategory(params.id, categoryData)
+    // Parse the request body first to capture any JSON parsing errors
+    let categoryData;
+    try {
+      categoryData = await request.json();
+    } catch (error) {
+      console.error("Error parsing request body:", error);
+      return NextResponse.json(
+        { error: "Invalid request body - failed to parse JSON" },
+        { status: 400 }
+      );
+    }
+    
+    // Validate required fields
+    if (!categoryData.name || !categoryData.slug) {
+      return NextResponse.json(
+        { error: "Name and slug are required fields" },
+        { status: 400 }
+      );
+    }
+    
+    // Update the category
+    const category = await updateCategory(params.id, categoryData);
     
     return NextResponse.json(category)
   } catch (error) {
     console.error("Error updating category:", error)
+    
+    // Check for specific error types
+    const errorMessage = error instanceof Error ? error.message : "Failed to update category";
+    const status = errorMessage.includes("not found") ? 404 : 500;
+    
     return NextResponse.json(
-      { error: "Failed to update category" },
-      { status: 500 }
+      { error: errorMessage },
+      { status }
     )
   }
 }
