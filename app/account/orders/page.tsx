@@ -12,6 +12,7 @@ import Image from "next/image"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { OrderRequestForm } from "./components/order-request-form"
 
 // Order status badge colors
 const statusColors = {
@@ -54,6 +55,12 @@ interface Order {
   adminComment?: string
   createdAt: string | Date
   updatedAt: string | Date
+  customerRequest?: {
+    type: string
+    status: string
+    reason: string
+    adminComment?: string
+  }
 }
 
 export default function OrdersPage() {
@@ -250,45 +257,41 @@ export default function OrdersPage() {
                       <div className="text-sm text-muted-foreground">
                         <p>{order.shippingAddress.name}</p>
                         <p>{order.shippingAddress.address}</p>
-                        <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
+                        <p>
+                          {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+                          {order.shippingAddress.postalCode}
+                        </p>
                         <p>{order.shippingAddress.country}</p>
                       </div>
                     </div>
                     
                     <Separator />
                     
+                    {/* Order Request Actions */}
                     <div>
-                      <h5 className="text-sm font-medium mb-2">Order Summary</h5>
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>Subtotal</span>
-                          <span>{formatCurrency(order.totalAmount - 500)}</span>
+                      <h5 className="text-sm font-medium mb-2">Order Actions</h5>
+                      
+                      {order.customerRequest ? (
+                        <div className="text-sm p-3 bg-muted rounded-md">
+                          <p className="font-medium">
+                            {order.customerRequest.type.charAt(0).toUpperCase() + order.customerRequest.type.slice(1)} Request: 
+                            <Badge className="ml-2" variant={
+                              order.customerRequest.status === "approved" ? "secondary" : 
+                              order.customerRequest.status === "rejected" ? "destructive" : 
+                              "outline"
+                            }>
+                              {order.customerRequest.status.charAt(0).toUpperCase() + order.customerRequest.status.slice(1)}
+                            </Badge>
+                          </p>
+                          <p className="mt-1">Reason: {order.customerRequest.reason}</p>
+                          {order.customerRequest.adminComment && (
+                            <p className="mt-1">Admin Response: {order.customerRequest.adminComment}</p>
+                          )}
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Shipping</span>
-                          <span>{formatCurrency(500)}</span>
-                        </div>
-                        <div className="flex justify-between font-medium mt-2">
-                          <span>Total</span>
-                          <span>{formatCurrency(order.totalAmount)}</span>
-                        </div>
-                      </div>
+                      ) : (
+                        <OrderRequestForm order={order} onRequestSubmitted={fetchOrders} />
+                      )}
                     </div>
-                    
-                    {order.adminComment && (
-                      <>
-                        <Separator />
-                        <div>
-                          <h5 className="text-sm font-medium mb-2 flex items-center">
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Message from Seller
-                          </h5>
-                          <div className="text-sm p-3 bg-muted rounded-md">
-                            {order.adminComment}
-                          </div>
-                        </div>
-                      </>
-                    )}
                   </div>
                 </div>
               )}

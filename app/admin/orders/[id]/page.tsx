@@ -12,7 +12,6 @@ import { Loader2, ArrowLeft, MessageSquare, Truck, CheckCircle, Package, Printer
 import Link from "next/link"
 import Image from "next/image"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { Order, OrderItem } from "@/lib/orders"
 import {
   Select,
   SelectContent,
@@ -20,6 +19,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+
+interface OrderItem {
+  _id: string
+  name: string
+  price: number
+  image: string
+  quantity: number
+  variant?: string
+}
+
+interface Order {
+  _id: string
+  user: {
+    _id: string
+    name: string
+    email: string
+  }
+  items: OrderItem[]
+  totalAmount: number
+  total?: number
+  discount?: number
+  shippingAddress: {
+    name: string
+    address: string
+    city: string
+    state: string
+    postalCode: string
+    country: string
+  }
+  paymentStatus: "pending" | "completed" | "failed"
+  paymentMethod?: string
+  paymentId?: string
+  orderStatus: "processing" | "shipped" | "delivered" | "cancelled"
+  adminComment?: string
+  createdAt: string | Date
+  updatedAt: string | Date
+  customerRequest?: {
+    status: "pending" | "approved" | "rejected"
+    type: "cancellation" | "return"
+    reason: string
+    createdAt: string | Date
+  }
+}
 
 export default function AdminOrderPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -297,15 +339,15 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
                       <p className="text-sm text-muted-foreground">Shipping</p>
                       <p className="text-sm">
                         {formatCurrency(
-                          (order.totalAmount || order.total || 0) - 
+                          (order.totalAmount || 0) - 
                           order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
                         )}
                       </p>
                     </div>
-                    {order.discount > 0 && (
+                    {order.discount && order.discount > 0 && (
                       <div className="flex justify-between">
                         <p className="text-sm text-muted-foreground">Discount</p>
-                        <p className="text-sm text-green-600">-{formatCurrency(order.discount)}</p>
+                        <p className="text-sm text-green-600">-{formatCurrency(order.discount || 0)}</p>
                       </div>
                     )}
                     <div className="flex justify-between font-medium">
@@ -321,10 +363,10 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
                 <div>
                   <h3 className="font-medium mb-2">Shipping Address</h3>
                   <div className="text-sm text-muted-foreground">
-                    <p>{order.shippingAddress.street}</p>
+                    <p>{order.shippingAddress.address}</p>
                     <p>
                       {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
-                      {order.shippingAddress.zipCode}
+                      {order.shippingAddress.postalCode}
                     </p>
                     <p>{order.shippingAddress.country}</p>
                   </div>
@@ -338,7 +380,7 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
                     <div className="flex items-center justify-between">
                       <p>
                         <span className="font-medium">Status:</span>{' '}
-                        <Badge variant={order.paymentStatus === "completed" ? "success" : "outline"}>
+                        <Badge variant={order.paymentStatus === "completed" ? "secondary" : "destructive"}>
                           {order.paymentStatus === "completed" ? "Paid" : "Pending"}
                         </Badge>
                       </p>
@@ -467,6 +509,127 @@ export default function AdminOrderPage({ params }: { params: { id: string } }) {
               </Button>
             </CardFooter>
           </Card>
+          
+          {/* Customer Request Card */}
+          {order.customerRequest && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-xl">Customer Request</CardTitle>
+                <Badge className="mb-2" variant={
+                  order.customerRequest.status === "pending" ? "outline" : 
+                  order.customerRequest.status === "approved" ? "secondary" : 
+                  "destructive"
+                }>
+                  {order.customerRequest.status.charAt(0).toUpperCase() + order.customerRequest.status.slice(1)}
+                </Badge>
+                <CardDescription>
+                  {order.customerRequest.type === "cancellation" ? "Cancellation" : "Return"} requested on{" "}
+                  {formatDate(new Date(order.customerRequest.createdAt))}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Customer Reason</h3>
+                    <p className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-md">
+                      {order.customerRequest.reason}
+                    </p>
+                  </div>
+                  
+                  {order.customerRequest.status === "pending" && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">Your Response</h3>
+                      <Textarea 
+                        value={adminComment} 
+                        onChange={(e) => setAdminComment(e.target.value)}
+                        placeholder="Provide a response for the customer"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              
+              {order.customerRequest.status === "pending" && (
+                <CardFooter className="flex gap-2">
+                  <Button 
+                    className="flex-1"
+                    variant="outline" 
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/api/admin/orders/${orderId}/request`, {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            status: "rejected",
+                            adminComment,
+                          }),
+                        });
+                        
+                        if (!response.ok) throw new Error("Failed to update request");
+                        
+                        const data = await response.json();
+                        setOrder(data.order);
+                        
+                        toast({
+                          title: "Success",
+                          description: "Request rejected",
+                        });
+                      } catch (error) {
+                        console.error("Error updating request:", error);
+                        toast({
+                          title: "Error",
+                          description: "Failed to update request",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    Reject Request
+                  </Button>
+                  <Button 
+                    className="flex-1"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/api/admin/orders/${orderId}/request`, {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            status: "approved",
+                            adminComment,
+                            updateOrderStatus: order.customerRequest?.type === "cancellation" ? "cancelled" : undefined
+                          }),
+                        });
+                        
+                        if (!response.ok) throw new Error("Failed to update request");
+                        
+                        const data = await response.json();
+                        setOrder(data.order);
+                        
+                        toast({
+                          title: "Success",
+                          description: `Request approved${order.customerRequest?.type === "cancellation" ? " and order cancelled" : ""}`,
+                        });
+                      } catch (error) {
+                        console.error("Error updating request:", error);
+                        toast({
+                          title: "Error",
+                          description: "Failed to update request",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    Approve Request
+                  </Button>
+                </CardFooter>
+              )}
+            </Card>
+          )}
         </div>
       </div>
     </div>

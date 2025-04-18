@@ -205,7 +205,7 @@ export default function AdminOrdersPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={order.paymentStatus === "completed" ? "outline" : "destructive"}>
-                      {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                      {order.paymentStatus ? order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1) : "Unknown"}
                     </Badge>
                   </TableCell>
                   <TableCell>
