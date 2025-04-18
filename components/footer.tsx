@@ -5,11 +5,14 @@ import { Input } from "@/components/ui/input"
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-800 text-white">
+    <footer className="bg-[#1d503a] text-white">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>
-            <h3 className="mb-4 text-lg font-serif font-bold">Emerald Gold</h3>
+            <h3 className="mb-4 text-lg font-serif font-bold flex items-center">
+              <img src="/logo-mono.png" alt="Kratim" className="h-10 mr-2" />
+              KRATIM
+            </h3>
             <p className="mb-4 text-gray-300">
               Crafting timeless luxury jewelry with exquisite craftsmanship and elegant designs since 1990.
             </p>
@@ -98,15 +101,15 @@ export default function Footer() {
               <Input
                 type="email"
                 placeholder="Your email address"
-                className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                className="bg-[#164430] border-[#0c3020] text-white placeholder:text-gray-400"
               />
-              <Button className="bg-amber-600 hover:bg-amber-700">Subscribe</Button>
+              <Button className="bg-[#c8a25d] hover:bg-[#b08d4a] text-white">Subscribe</Button>
             </form>
           </div>
         </div>
 
-        <div className="mt-12 border-t border-gray-700 pt-8 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Emerald Gold. All rights reserved.</p>
+        <div className="mt-12 border-t border-[#164430] pt-8 text-center text-sm text-gray-300">
+          <p>&copy; {new Date().getFullYear()} Kratim. All rights reserved.</p>
         </div>
       </div>
     </footer>

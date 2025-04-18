@@ -26,6 +26,7 @@ interface ProductFiltersProps {
   maxPrice: number
   currentFilters: {
     category: string
+    collection: string
     sort: string
     minPrice: number
     maxPrice: number
@@ -35,115 +36,115 @@ interface ProductFiltersProps {
 export default function ProductFilters({ categories, maxPrice, currentFilters }: ProductFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  const [category, setCategory] = useState(currentFilters.category)
+  const [collection, setCollection] = useState(currentFilters.collection)
+  const [sort, setSort] = useState(currentFilters.sort)
+  const [priceRange, setPriceRange] = useState<[number, number]>([
+    currentFilters.minPrice,
+    currentFilters.maxPrice
+  ])
+  const [collections, setCollections] = useState<{_id: string, name: string, slug: string}[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   
-  const [minPrice, setMinPrice] = useState(currentFilters.minPrice)
-  const [selectedMaxPrice, setSelectedMaxPrice] = useState(currentFilters.maxPrice || maxPrice)
-  const [category, setCategory] = useState<string>(currentFilters.category || "all")
-  const [sort, setSort] = useState<string>(currentFilters.sort || "default")
-  const [filtersChanged, setFiltersChanged] = useState(false)
-
-  // Check if the current filters differ from the URL params
   useEffect(() => {
-    const urlMinPrice = searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice') as string) : 0
-    const urlMaxPrice = searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice') as string) : maxPrice
-    const urlCategory = searchParams.get('category') || "all"
-    const urlSort = searchParams.get('sort') || "default"
+    const fetchCollections = async () => {
+      setIsLoading(true)
+      try {
+        const res = await fetch('/api/collections')
+        if (res.ok) {
+          const data = await res.json()
+          setCollections(data)
+        }
+      } catch (error) {
+        console.error("Error fetching collections:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
     
-    // Check if any filters have changed from the URL
-    const hasChanged = 
-      minPrice !== urlMinPrice ||
-      selectedMaxPrice !== urlMaxPrice ||
-      category !== urlCategory ||
-      sort !== urlSort
+    fetchCollections()
+  }, [])
+  
+  // Check if filters have changed from the current URL params
+  const filtersChanged = 
+    category !== currentFilters.category ||
+    collection !== currentFilters.collection ||
+    sort !== currentFilters.sort ||
+    priceRange[0] !== currentFilters.minPrice ||
+    priceRange[1] !== currentFilters.maxPrice
 
-    setFiltersChanged(hasChanged)
-  }, [minPrice, selectedMaxPrice, category, sort, searchParams, maxPrice])
-
-  const handleReset = () => {
-    setMinPrice(0)
-    setSelectedMaxPrice(maxPrice)
-    setCategory("all")
-    setSort("default")
-    
-    // Update URL by removing all filter parameters
-    router.push('/shop')
-    setFiltersChanged(false)
-  }
-
+  // Apply filters by updating the URL
   const handleApplyFilters = () => {
-    // Create a new URLSearchParams instance
     const params = new URLSearchParams()
-    
-    // Add parameters only if they have values
-    if (minPrice > 0) {
-      params.set('minPrice', minPrice.toString())
-    }
-    
-    if (selectedMaxPrice < maxPrice) {
-      params.set('maxPrice', selectedMaxPrice.toString())
-    }
-    
-    if (category && category !== "all") {
+
+    if (category !== 'all') {
       params.set('category', category)
     }
-    
-    if (sort && sort !== "default") {
+
+    if (collection !== 'all') {
+      params.set('collection', collection)
+    }
+
+    if (sort !== 'default') {
       params.set('sort', sort)
     }
-    
-    // Update the URL with the new filters
-    const newPath = params.toString() ? `/shop?${params.toString()}` : '/shop'
-    router.push(newPath)
-    setFiltersChanged(false)
+
+    if (priceRange[0] > 0) {
+      params.set('minPrice', priceRange[0].toString())
+    }
+
+    if (priceRange[1] < maxPrice) {
+      params.set('maxPrice', priceRange[1].toString())
+    }
+
+    const query = params.toString()
+    router.push(`/shop${query ? `?${query}` : ''}`)
+  }
+
+  const resetFilters = () => {
+    setCategory('all')
+    setCollection('all')
+    setSort('default')
+    setPriceRange([0, maxPrice])
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium">Filters</h3>
+      <div className="flex justify-between items-center">
+        <span className="text-sm font-medium">Filters</span>
         {filtersChanged && (
-          <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 text-sm">
-            <X className="h-4 w-4 mr-1" /> Reset
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={resetFilters}
+            className="h-8 text-sm text-gray-500 hover:text-gray-900"
+          >
+            Reset <X className="ml-1 h-3 w-3" />
           </Button>
         )}
       </div>
 
-      <Accordion type="multiple" className="w-full" defaultValue={["price", "category", "sort"]}>
+      <Accordion type="multiple" defaultValue={["price", "category", "collection", "sort"]}>
         <AccordionItem value="price">
           <AccordionTrigger>Price Range</AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4 pt-2">
               <Slider
-                value={[selectedMaxPrice]}
+                defaultValue={[priceRange[0], priceRange[1]]}
                 max={maxPrice}
-                step={10}
-                onValueChange={(value) => setSelectedMaxPrice(value[0])}
+                step={100}
+                value={[priceRange[0], priceRange[1]]}
+                onValueChange={(value) => setPriceRange([value[0], value[1]])}
               />
-              <div className="flex items-center space-x-2">
-                <div>
-                  <Label htmlFor="min-price">Min</Label>
-                  <Input
-                    id="min-price"
-                    type="number"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(Number(e.target.value))}
-                    min={0}
-                    max={selectedMaxPrice}
-                    className="h-8"
-                  />
+              <div className="flex items-center justify-between">
+                <div className="bg-gray-100 px-3 py-1.5 rounded-md">
+                  <Label className="text-xs">Min</Label>
+                  <p className="font-medium">₹{priceRange[0]}</p>
                 </div>
-                <div className="pt-5">—</div>
-                <div>
-                  <Label htmlFor="max-price">Max</Label>
-                  <Input
-                    id="max-price"
-                    type="number"
-                    value={selectedMaxPrice}
-                    onChange={(e) => setSelectedMaxPrice(Number(e.target.value))}
-                    min={minPrice}
-                    max={maxPrice}
-                    className="h-8"
-                  />
+                <div className="bg-gray-100 px-3 py-1.5 rounded-md">
+                  <Label className="text-xs">Max</Label>
+                  <p className="font-medium">₹{priceRange[1]}</p>
                 </div>
               </div>
             </div>
@@ -164,6 +165,31 @@ export default function ProductFilters({ categories, maxPrice, currentFilters }:
                     {cat}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="collection">
+          <AccordionTrigger>Collection</AccordionTrigger>
+          <AccordionContent>
+            <Select value={collection} onValueChange={setCollection}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All Collections" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Collections</SelectItem>
+                {isLoading ? (
+                  <SelectItem value="" disabled>Loading collections...</SelectItem>
+                ) : collections.length > 0 ? (
+                  collections.map((col) => (
+                    <SelectItem key={col._id} value={col._id}>
+                      {col.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>No collections available</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </AccordionContent>

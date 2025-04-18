@@ -1,14 +1,14 @@
 "use client"
 
-import type React from "react"
-
+import React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, ShoppingCart, User, Menu } from "lucide-react"
+import { Search, ShoppingCart, User, Menu, ChevronDown } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useAuth } from "@/lib/auth-context"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -17,16 +17,76 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu"
+import { cn } from "@/lib/utils"
+
+// Define TypeScript interfaces for category and collection
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+}
+
+interface Collection {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+}
 
 export default function Header() {
   const { cart } = useCart()
   const { user, signOut } = useAuth()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
+  const [categories, setCategories] = useState<Category[]>([])
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0)
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      try {
+        const [categoriesRes, collectionsRes] = await Promise.all([
+          fetch('/api/categories'),
+          fetch('/api/collections')
+        ])
+        
+        if (categoriesRes.ok && collectionsRes.ok) {
+          const [categoriesData, collectionsData] = await Promise.all([
+            categoriesRes.json(),
+            collectionsRes.json()
+          ])
+          
+          setCategories(categoriesData)
+          setCollections(collectionsData)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchData()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,22 +95,76 @@ export default function Header() {
     }
   }
 
-  const navLinks = [
+  // Mobile drawer menu items
+  const mobileNavItems = [
     { name: "Home", href: "/" },
     { name: "Shop", href: "/shop" },
+    { name: "Categories", href: "/categories" },
     { name: "Collections", href: "/collections" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/#contact" },
   ]
 
+  // Enhanced list item with image
+  const ListItem = React.forwardRef<
+    React.ElementRef<"a">,
+    React.ComponentPropsWithoutRef<"a"> & { 
+      title: string; 
+      image?: string;
+    }
+  >(({ className, title, image, children, ...props }, ref) => {
+    return (
+      <li>
+        <NavigationMenuLink asChild>
+          <a
+            ref={ref}
+            className={cn(
+              "flex gap-3 select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+              className
+            )}
+            {...props}
+          >
+            {image && (
+              <div className="w-12 h-12 rounded-md overflow-hidden relative flex-shrink-0">
+                <Image 
+                  src={image || "/placeholder.jpg"} 
+                  alt={title}
+                  width={48}
+                  height={48}
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <div className="space-y-1">
+              <div className="text-sm font-medium leading-none">{title}</div>
+              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                {children}
+              </p>
+            </div>
+          </a>
+        </NavigationMenuLink>
+      </li>
+    )
+  })
+  ListItem.displayName = "ListItem"
+
   return (
-    <header className="border-b bg-white">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
+    <header className="border-b bg-white sticky top-0 z-40">
+      {/* Free Shipping Banner */}
+      <section className="bg-[#1d503a] text-white py-1 text-center">
+        <div className="container mx-auto px-1 sm:px-6 lg:px-8">
+          <p className="text-sm sm:text-base">
+            🚚 Free Shipping Anywhere in India for orders above ₹499
+          </p>
+        </div>
+      </section>
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center">
+          {/* Mobile menu trigger */}
+          <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
+                <Button variant="ghost" size="icon" className="mr-2">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle menu</span>
                 </Button>
@@ -58,7 +172,7 @@ export default function Header() {
               <SheetContent side="left" className="w-[300px]">
                 <div className="flex flex-col gap-6 py-6">
                   <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold">
-                    Emerald Gold
+                    <img src="/logo.png" alt="Kratim" className="h-12" />
                   </Link>
 
                   <form onSubmit={handleSearch} className="relative">
@@ -72,8 +186,8 @@ export default function Header() {
                   </form>
 
                   <nav className="flex flex-col gap-2">
-                    {navLinks.map((link) => (
-                      <Link key={link.name} href={link.href} className="py-2 text-gray-700 hover:text-amber-600">
+                    {mobileNavItems.map((link) => (
+                      <Link key={link.name} href={link.href} className="py-2 text-gray-700 hover:text-[#1d503a]">
                         {link.name}
                       </Link>
                     ))}
@@ -90,23 +204,23 @@ export default function Header() {
                           <span className="text-sm font-medium">{user.name}</span>
                         </div>
                         {user.role === "admin" && (
-                          <Link href="/admin" className="py-2 text-gray-700 hover:text-amber-600">
+                          <Link href="/admin" className="py-2 text-gray-700 hover:text-[#1d503a]">
                             Admin Dashboard
                           </Link>
                         )}
-                        <Link href="/account" className="py-2 text-gray-700 hover:text-amber-600">
+                        <Link href="/account" className="py-2 text-gray-700 hover:text-[#1d503a]">
                           My Account
                         </Link>
-                        <button onClick={() => signOut()} className="py-2 text-left text-gray-700 hover:text-amber-600">
+                        <button onClick={() => signOut()} className="py-2 text-left text-gray-700 hover:text-[#1d503a]">
                           Sign Out
                         </button>
                       </>
                     ) : (
                       <>
-                        <Link href="/auth/signin" className="py-2 text-gray-700 hover:text-amber-600">
+                        <Link href="/auth/signin" className="py-2 text-gray-700 hover:text-[#1d503a]">
                           Sign In
                         </Link>
-                        <Link href="/auth/signup" className="py-2 text-gray-700 hover:text-amber-600">
+                        <Link href="/auth/signup" className="py-2 text-gray-700 hover:text-[#1d503a]">
                           Register
                         </Link>
                       </>
@@ -115,25 +229,108 @@ export default function Header() {
                 </div>
               </SheetContent>
             </Sheet>
-
-            <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold">
-              Emerald Gold
-            </Link>
-
-            <nav className="ml-10 hidden md:flex items-center gap-6">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="text-sm font-medium text-gray-700 hover:text-amber-600"
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold">
+              <img src="/logo.png" alt="Kratim" className="h-12" />
+            </Link>
+          </div>
+
+          {/* Centered Navigation */}
+          <div className="hidden md:flex justify-center flex-1">
+            <NavigationMenu className="mx-auto">
+              <NavigationMenuList className="gap-1">
+                <NavigationMenuItem>
+                  <Link href="/" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Home
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                
+                <NavigationMenuItem>
+                  <Link href="/shop" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Shop
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Categories</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[600px] gap-3 p-4 md:grid-cols-2">
+                      {isLoading ? (
+                        <li className="col-span-2 p-4 text-center">Loading categories...</li>
+                      ) : categories.length > 0 ? (
+                        <>
+                          {categories.map((category) => (
+                            <ListItem
+                              key={category._id}
+                              title={category.name}
+                              href={`/categories/${category.slug}`}
+                              image={category.image || "/placeholder.jpg"}
+                            >
+                              {category.description?.substring(0, 60) || "Shop our beautiful collection"}
+                            </ListItem>
+                          ))}
+                        </>
+                      ) : (
+                        <li className="col-span-2 p-4 text-center">No categories available</li>
+                      )}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+                
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Collections</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[600px] gap-3 p-4 md:grid-cols-2">
+                      {isLoading ? (
+                        <li className="col-span-2 p-4 text-center">Loading collections...</li>
+                      ) : collections.length > 0 ? (
+                        <>
+                          {collections.map((collection) => (
+                            <ListItem
+                              key={collection._id}
+                              title={collection.name}
+                              href={`/collections/${collection.slug}`}
+                              image={collection.image || "/placeholder.jpg"}
+                            >
+                              {collection.description?.substring(0, 60) || "Explore our curated collection"}
+                            </ListItem>
+                          ))}
+                        </>
+                      ) : (
+                        <li className="col-span-2 p-4 text-center">No collections available</li>
+                      )}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+                
+                <NavigationMenuItem>
+                  <Link href="/about" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      About
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                
+                <NavigationMenuItem>
+                  <Link href="/#contact" legacyBehavior passHref>
+                    <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                      Contact
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
+
+          {/* Right side items */}
+          <div className="flex items-center gap-4 ml-auto">
             <form onSubmit={handleSearch} className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
@@ -154,36 +351,40 @@ export default function Header() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <div className="flex items-center gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      {user.name && <p className="font-medium">{user.name}</p>}
-                      {user.email && <p className="w-[200px] truncate text-sm text-gray-500">{user.email}</p>}
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.name}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
                     </div>
-                  </div>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {user.role === "admin" && (
+                  <DropdownMenuGroup>
+                    {user.role === "admin" && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">Admin Dashboard</Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
-                      <Link href="/admin">Admin Dashboard</Link>
+                      <Link href="/account">My Account</Link>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem asChild>
-                    <Link href="/account">My Account</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/account/orders">My Orders</Link>
-                  </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/account/orders">My Orders</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer" onSelect={() => signOut()}>
+                  <DropdownMenuItem onClick={() => signOut()} className="text-red-600">
                     Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="ghost" size="icon" asChild>
+              <Button variant="ghost" size="sm" asChild className="gap-1">
                 <Link href="/auth/signin">
-                  <User className="h-5 w-5" />
-                  <span className="sr-only">Sign in</span>
+                  <User className="h-4 w-4" />
+                  <span>Sign in</span>
                 </Link>
               </Button>
             )}
@@ -192,7 +393,7 @@ export default function Header() {
               <Link href="/cart">
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemsCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-xs font-medium text-white">
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#c8a25d] text-xs font-medium text-white">
                     {cartItemsCount}
                   </span>
                 )}

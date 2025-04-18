@@ -1,4 +1,4 @@
- // User types
+// User types
 export interface User {
     _id: string
     name: string
@@ -17,6 +17,7 @@ export interface User {
     compareAtPrice?: number
     images: string[]
     category: string
+    collection?: string
     featured?: boolean
     inventory: number
     material?: string

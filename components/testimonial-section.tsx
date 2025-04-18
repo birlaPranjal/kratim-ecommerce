@@ -19,7 +19,7 @@ const testimonials: Testimonial[] = [
     id: 1,
     name: "Sophia Mitchell",
     title: "Regular Customer",
-    image: "https://placehold.co/1920x1080/gold/white?text=testimonial-1",
+    image: "https://placehold.co/1920x1080/5e7d77/faf5ee?text=testimonial-1",
     quote: "The craftsmanship is remarkable. Every piece I've purchased has been an investment in timeless beauty that I'll cherish for years to come.",
     rating: 5,
   },
@@ -27,7 +27,7 @@ const testimonials: Testimonial[] = [
     id: 2,
     name: "James Wilson",
     title: "Watch Collector",
-    image: "https://placehold.co/1920x1080/gold/white?text=testimonial-2",
+    image: "https://placehold.co/1920x1080/5e7d77/faf5ee?text=testimonial-2",
     quote: "The attention to detail and quality of materials used in their pieces is outstanding. Their customer service is equally impressive.",
     rating: 5,
   },
@@ -35,7 +35,7 @@ const testimonials: Testimonial[] = [
     id: 3,
     name: "Emma Thompson",
     title: "Interior Designer",
-    image: "https://placehold.co/1920x1080/gold/white?text=testimonial-3",
+    image: "https://placehold.co/1920x1080/5e7d77/faf5ee?text=testimonial-3",
     quote: "I've recommended Emerald Gold to numerous clients. Their jewelry pieces add the perfect finishing touch to any space or outfit.",
     rating: 5,
   },
@@ -55,17 +55,17 @@ export default function TestimonialSection() {
   const currentTestimonial = testimonials[currentIndex]
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-16 bg-primary/5">
       <div className="container mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-serif font-bold mb-4">What Our Customers Say</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-serif font-bold mb-4 text-secondary">What Our Customers Say</h2>
+          <p className="text-foreground max-w-2xl mx-auto">
             Discover why our clients choose Emerald Gold for their most precious moments.
           </p>
         </div>
 
         <div className="max-w-4xl mx-auto">
-          <div className="relative bg-white p-8 md:p-12 rounded-lg shadow-sm">
+          <div className="relative bg-background p-8 md:p-12 rounded-lg shadow-sm">
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div className="w-24 h-24 relative rounded-full overflow-hidden">
                 <Image
@@ -78,13 +78,13 @@ export default function TestimonialSection() {
               <div className="flex-1">
                 <div className="flex mb-2">
                   {Array.from({ length: currentTestimonial.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-500 text-amber-500" />
+                    <Star key={i} className="w-4 h-4 fill-primary text-primary" />
                   ))}
                 </div>
-                <p className="text-gray-700 italic mb-4">"{currentTestimonial.quote}"</p>
+                <p className="text-foreground italic mb-4">"{currentTestimonial.quote}"</p>
                 <div>
-                  <p className="font-medium">{currentTestimonial.name}</p>
-                  <p className="text-gray-500 text-sm">{currentTestimonial.title}</p>
+                  <p className="font-medium font-serif">{currentTestimonial.name}</p>
+                  <p className="text-foreground/60 text-sm">{currentTestimonial.title}</p>
                 </div>
               </div>
             </div>
@@ -105,7 +105,7 @@ export default function TestimonialSection() {
                   variant="ghost"
                   size="icon"
                   className={`h-2 w-2 rounded-full p-0 ${
-                    i === currentIndex ? "bg-amber-600" : "bg-gray-300"
+                    i === currentIndex ? "bg-primary" : "bg-gray-300"
                   }`}
                   onClick={() => setCurrentIndex(i)}
                 >

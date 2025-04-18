@@ -7,6 +7,11 @@ import { Suspense } from "react"
 import { TableSkeleton } from "@/components/admin/table-skeleton"
 import ProductsSearch from "@/components/admin/products-search"
 
+export const metadata = {
+  title: "Admin - Products",
+  description: "Manage your products",
+}
+
 export default async function AdminProductsPage({
   searchParams,
 }: {
@@ -20,21 +25,25 @@ export default async function AdminProductsPage({
   const products = await getProducts({ query, category, sort })
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Products</h1>
-        <Button asChild className="bg-amber-600 hover:bg-amber-700">
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">Products</h1>
+        <Button asChild className="bg-amber-600 hover:bg-amber-700 w-full sm:w-auto">
           <Link href="/admin/products/new">
             <PlusCircle className="mr-2 h-4 w-4" /> Add Product
           </Link>
         </Button>
       </div>
 
-      <ProductsSearch />
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <ProductsSearch />
+      </div>
 
-      <Suspense fallback={<TableSkeleton columns={6} rows={10} />}>
-        <ProductsTable products={products} />
-      </Suspense>
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <Suspense fallback={<TableSkeleton columns={6} rows={10} />}>
+          <ProductsTable products={products} />
+        </Suspense>
+      </div>
     </div>
   )
 }
