@@ -10,6 +10,12 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+      fontFamily: {
+        coconat: ['var(--font-coconat)', 'serif'],
+        gilroy: ['var(--font-gilroy)', 'sans-serif'],
+        afterglow: ['var(--font-afterglow)', 'serif'],
+        astragon: ['var(--font-astragon)', 'serif'],
+      },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

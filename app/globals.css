@@ -6,11 +6,8 @@ html {
   scroll-behavior: smooth;
 }
 
-@import url('https://fonts.cdnfonts.com/css/recoleta');
-@import url('https://fonts.cdnfonts.com/css/gilroy-bold');
-
 body {
-  font-family: 'Gilroy', Arial, Helvetica, sans-serif;
+  font-family: var(--font-gilroy), system-ui, sans-serif;
 }
 
 @layer utilities {
@@ -101,7 +98,85 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Font styles - using Astragon for headings */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Recoleta', serif;
+    font-family: var(--font-astragon), serif;
+    letter-spacing: 0.01em;
+  }
+  
+  .font-afterglow {
+    font-family: var(--font-afterglow), serif;
+  }
+  
+  .font-coconat {
+    font-family: var(--font-coconat), serif;
+  }
+  
+  .font-gilroy {
+    font-family: var(--font-gilroy), sans-serif;
+  }
+  
+  .font-astragon {
+    font-family: var(--font-astragon), serif;
+  }
+}
+
+/* Loading animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #faf5ee 25%, #e6e2db 50%, #faf5ee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mobile-reduced-height {
+    height: 300px !important;
+  }
+}
+
+/* Scroll animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Section styling */
+.section-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .section-container {
+    padding: 4rem 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-container {
+    padding: 5rem 2.5rem;
   }
 }

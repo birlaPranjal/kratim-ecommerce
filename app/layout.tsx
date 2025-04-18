@@ -8,6 +8,52 @@ import { AuthProvider as AuthContextProvider } from "@/lib/auth-context"
 import { CartProvider } from "@/lib/cart-context"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
+import localFont from 'next/font/local'
+
+// Import custom fonts locally - using only the available fonts
+const coconat = localFont({
+  src: [
+    {
+      path: '../public/fonts/Coconat-Regular.woff2',
+      weight: '100',
+      style: 'regular',
+    }
+  ],
+  variable: '--font-coconat',
+})
+
+const afterglow = localFont({
+  src: [
+    {
+      path: '../public/fonts/Afterglow-Regular.woff2',
+      weight: '400',
+      style: 'normal',
+    }
+  ],
+  variable: '--font-afterglow',
+})
+
+const gilroy = localFont({
+  src: [
+    {
+      path: '../public/fonts/Gilroy-Medium.woff2',
+      weight: '500',
+      style: 'normal',
+    }
+  ],
+  variable: '--font-gilroy',
+})
+
+const astragon = localFont({
+  src: [
+    {
+      path: '../public/fonts/Astragon-Regular.woff2',
+      weight: '400',
+      style: 'normal',
+    }
+  ],
+  variable: '--font-astragon',
+})
 
 export const metadata: Metadata = {
   title: "Kratim | Timeless Luxury Jewelry",
@@ -21,14 +67,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" 
-        />
-      </head>
-      <body>
+    <html lang="en" suppressHydrationWarning className={`${coconat.variable} ${afterglow.variable} ${gilroy.variable} ${astragon.variable}`}>
+      <body className="font-gilroy bg-[#faf5ee]">
         <AuthProvider>
           <AuthContextProvider>
             <CartProvider>
