@@ -126,6 +126,166 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Jewellery Care Section */}
+      <section className="py-16 sm:py-20 lg:py-28 bg-amber-50">
+        <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold mb-4 text-amber-900">
+              Jewellery Care Guide
+            </h2>
+            <p className="text-amber-800 max-w-2xl mx-auto text-lg">
+              Essential tips to keep your precious pieces sparkling for generations
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Store Properly */}
+            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-amber-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <span className="text-2xl">💎</span>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900">Store Properly</h3>
+              </div>
+              <ul className="space-y-3 text-amber-800">
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Keep pieces separate to avoid scratches</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Use soft-lined boxes or pouches</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Store in dry places with silica gel</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Wear with Care */}
+            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-amber-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <span className="text-2xl">✨</span>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900">Wear with Care</h3>
+              </div>
+              <ul className="space-y-3 text-amber-800">
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Apply cosmetics before wearing</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Remove during swimming/exercising</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Avoid during household chores</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Clean Regularly */}
+            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-amber-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <span className="text-2xl">🛁</span>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900">Clean Regularly</h3>
+              </div>
+              <ul className="space-y-3 text-amber-800">
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Use soft brush and mild soap</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Pat dry with soft cloth</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Professional cleaning yearly</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Avoid Chemicals */}
+            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-amber-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <span className="text-2xl">🚫</span>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900">Avoid Chemicals</h3>
+              </div>
+              <ul className="space-y-3 text-amber-800">
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>No bleach or acids</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Keep away from chlorine</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Use soft cloth for polishing</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Check for Damage */}
+            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-amber-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <span className="text-2xl">🔍</span>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900">Check for Damage</h3>
+              </div>
+              <ul className="space-y-3 text-amber-800">
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Inspect for loose stones</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Check clasps and prongs</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Get professional repairs</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Additional Tips */}
+            <div className="bg-white p-8 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-amber-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-amber-100 p-3 rounded-full mr-4">
+                  <span className="text-2xl">💡</span>
+                </div>
+                <h3 className="text-xl font-semibold text-amber-900">Quick Tips</h3>
+              </div>
+              <ul className="space-y-3 text-amber-800">
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Store in airtight containers</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Clean after each wear</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-amber-600 mr-2">•</span>
+                  <span>Regular professional checks</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <TestimonialSection />
 
