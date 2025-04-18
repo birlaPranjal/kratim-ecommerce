@@ -37,22 +37,7 @@ export default async function Home() {
       {/* Hero Section with Rotating Banner */}
       <section className="relative h-[300px] sm:h-[450px] lg:h-[550px] w-full overflow-hidden mobile-reduced-height">
         <RotatingBanner images={bannerImages} interval={3000} />
-        <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/30">
-          <div className="text-white text-center px-4 sm:px-6 max-w-3xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-astragon mb-4 drop-shadow-lg">
-              Timeless Jewelry, <br className="hidden sm:block" /> Extraordinary Elegance
-            </h1>
-            <p className="text-lg sm:text-xl font-afterglow mb-6 max-w-lg mx-auto drop-shadow-md">
-              Exquisite designs that tell your unique story
-            </p>
-            <Button asChild className="bg-[#1d503a] hover:bg-[#1d503a]/90 text-white border border-white/20 px-6 py-3 rounded-full">
-              <Link href="/shop" className="inline-flex items-center gap-2">
-                Explore Collection
-                <ArrowRightCircle className="h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
+        
       </section>
 
       {/* Tagline Section */}
