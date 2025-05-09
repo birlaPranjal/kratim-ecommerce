@@ -15,7 +15,8 @@ import {
   Layers,
   Menu,
   X,
-  ExternalLink
+  ExternalLink,
+  MessageSquare
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
@@ -71,6 +72,11 @@ export default function AdminSidebar() {
       title: "Users",
       href: "/admin/users",
       icon: Users,
+    },
+    {
+      title: "Contact Messages",
+      href: "/admin/contact",
+      icon: MessageSquare,
     },
     {
       title: "Settings",

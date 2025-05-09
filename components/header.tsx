@@ -102,7 +102,7 @@ export default function Header() {
     { name: "Categories", href: "/categories" },
     { name: "Collections", href: "/collections" },
     { name: "About", href: "/about" },
-    { name: "Contact", href: "/#contact" },
+    { name: "Contact", href: "/contact" },
   ]
 
   // Enhanced list item with image
