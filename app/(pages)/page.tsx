@@ -9,6 +9,7 @@ import ContactForm from "@/components/contact-form"
 import FeaturesSection from "@/components/features-section"
 import CollectionShowcase from "@/components/collection-showcase"
 import RotatingBanner from "@/components/rotating-banner"
+import InstagramGallery from "@/components/instagram-gallery"
 import { Product } from "@/types"
 import { Suspense } from "react"
 import Loading from "@/components/ui/loading"
@@ -344,6 +345,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Instagram Gallery */}
+      <InstagramGallery />
 
       {/* Testimonials */}
       <TestimonialSection />

@@ -122,7 +122,7 @@ export default function CollectionShowcase() {
               </CardFooter>
             </Card>
           ))}
-        </div>
+              </div>
         
         {collections.length > collectionsPerPage && (
           <div className="mt-4 sm:mt-6 flex justify-center items-center gap-3">

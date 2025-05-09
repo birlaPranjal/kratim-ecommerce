@@ -6,8 +6,6 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/lib/auth-provider"
 import { AuthProvider as AuthContextProvider } from "@/lib/auth-context"
 import { CartProvider } from "@/lib/cart-context"
-import Header from "@/components/header"
-import Footer from "@/components/footer"
 import localFont from 'next/font/local'
 
 // Import custom fonts locally - using only the available fonts
@@ -78,13 +76,7 @@ export default function RootLayout({
                 enableSystem={false} 
                 disableTransitionOnChange
               >
-                <div className="flex min-h-screen flex-col">
-                  <Header />
-                  <main className="flex-1 w-full">
                     {children}
-                  </main>
-                  <Footer />
-                </div>
                 <Toaster />
               </ThemeProvider>
             </CartProvider>
