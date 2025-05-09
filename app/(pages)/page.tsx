@@ -144,10 +144,10 @@ export default async function Home() {
                 <Link href="/about">Discover More</Link>
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-6 lg:mt-0">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-6 lg:mt-0 h-[50vh]">
               <div className="overflow-hidden rounded-lg">
                 <Image
-                  src="/banner/Kratim Banner.png"
+                  src="/images/m2.jpg"
                   alt="Jewelry Craftsmanship"
                   width={300}
                   height={300}
@@ -156,7 +156,7 @@ export default async function Home() {
               </div>
               <div className="overflow-hidden rounded-lg mt-4 sm:mt-8">
                 <Image
-                  src="/banner/Kratim Banner 1.png"
+                  src="/images/m3.jpg"
                   alt="Jewelry Detail"
                   width={300}
                   height={300}
@@ -165,7 +165,7 @@ export default async function Home() {
               </div>
               <div className="overflow-hidden rounded-lg">
                 <Image
-                  src="/banner/Kratim Grid.png"
+                  src="/images/m4.jpg"
                   alt="Jewelry Making"
                   width={300}
                   height={300}
@@ -174,7 +174,7 @@ export default async function Home() {
               </div>
               <div className="overflow-hidden rounded-lg mt-4 sm:mt-8">
                 <Image
-                  src="/banner/Kratim Banner.png"
+                  src="/images/model.jpg"
                   alt="Finished Jewelry"
                   width={300}
                   height={300}
