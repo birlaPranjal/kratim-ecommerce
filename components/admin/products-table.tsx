@@ -166,7 +166,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
               )}
             </TableCell>
             <TableCell className="font-medium">{product.name}</TableCell>
-            <TableCell>${product.price.toFixed(2)}</TableCell>
+            <TableCell>₹{product.price.toFixed(2)}</TableCell>
             <TableCell>{product.category}</TableCell>
             <TableCell>{getInventoryStatus(getInventoryCount(product))}</TableCell>
             <TableCell>
