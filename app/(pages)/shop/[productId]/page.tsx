@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/utils"
 import { Heart, Share2, Truck, Shield, RotateCcw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import WishlistButtonWrapper from "@/components/wishlist-button-wrapper"
 
 export default async function ProductPage({
   params,
@@ -167,9 +168,12 @@ export default async function ProductPage({
 
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
                   <AddToCartButton product={product} className="flex-1" />
-                  <Button variant="outline" size="icon" className="h-12 w-12">
-                    <Heart className="h-5 w-5" />
-                  </Button>
+                  <WishlistButtonWrapper 
+                    productId={product._id}
+                    name={product.name}
+                    price={product.price}
+                    image={product.images[0] || "/images/product-placeholder.jpg"}
+                  />
                   <Button variant="outline" size="icon" className="h-12 w-12">
                     <Share2 className="h-5 w-5" />
                   </Button>

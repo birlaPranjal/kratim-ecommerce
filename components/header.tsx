@@ -5,9 +5,10 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, ShoppingCart, User, Menu, ChevronDown } from "lucide-react"
+import { Search, ShoppingCart, User, Menu, ChevronDown, Heart } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
 import { useAuth } from "@/lib/auth-context"
+import { useWishlist } from "@/lib/wishlist-context"
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -52,6 +53,7 @@ interface Collection {
 export default function Header() {
   const { cart } = useCart()
   const { user, signOut } = useAuth()
+  const { wishlist } = useWishlist()
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [categories, setCategories] = useState<Category[]>([])
@@ -59,6 +61,7 @@ export default function Header() {
   const [isLoading, setIsLoading] = useState(false)
 
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0)
+  const wishlistItemsCount = wishlist?.length || 0
 
   useEffect(() => {
     async function fetchData() {
@@ -103,6 +106,7 @@ export default function Header() {
     { name: "Collections", href: "/collections" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
+    { name: "Wishlist", href: "/wishlist" },
   ]
 
   // Enhanced list item with image
@@ -373,6 +377,9 @@ export default function Header() {
                     <DropdownMenuItem asChild>
                       <Link href="/account/orders">My Orders</Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/wishlist">My Wishlist</Link>
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()} className="text-red-600">
@@ -398,6 +405,18 @@ export default function Header() {
                   </span>
                 )}
                 <span className="sr-only">Cart</span>
+              </Link>
+            </Button>
+
+            <Button variant="ghost" size="icon" asChild className="relative">
+              <Link href="/wishlist">
+                <Heart className="h-5 w-5" />
+                {wishlistItemsCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#c8a25d] text-xs font-medium text-white">
+                    {wishlistItemsCount}
+                  </span>
+                )}
+                <span className="sr-only">Wishlist</span>
               </Link>
             </Button>
           </div>

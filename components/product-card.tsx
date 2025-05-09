@@ -5,10 +5,12 @@ import { useCart } from "@/lib/cart-context"
 // import { Product } from "@/lib/products"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { ShoppingCart } from "lucide-react"
+import { ShoppingCart, Heart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "@/components/ui/use-toast"
+import WishlistButton from "@/components/wishlist-button"
+import { formatPrice } from "@/lib/utils"
 
 // Define Product type locally
 interface Product {
@@ -46,13 +48,23 @@ export default function ProductCard({ product }: ProductCardProps) {
     })
   }
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(product.price)
+  const formattedPrice = formatPrice(product.price)
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden group relative">
+      {/* Wishlist button */}
+      <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <WishlistButton
+          productId={product._id}
+          name={product.name}
+          price={product.price}
+          image={product.images[0] || "/images/product-placeholder.jpg"}
+          variant="outline"
+          size="icon"
+          className="bg-white/90 backdrop-blur-sm hover:bg-white h-8 w-8"
+        />
+      </div>
+      
       <Link href={`/shop/${product._id}`} className="block overflow-hidden relative aspect-square">
         <Image
           src={product.images[0] || "/images/product-placeholder.jpg"}

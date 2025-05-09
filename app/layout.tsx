@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/lib/auth-provider"
 import { AuthProvider as AuthContextProvider } from "@/lib/auth-context"
 import { CartProvider } from "@/lib/cart-context"
+import { WishlistProvider } from "@/lib/wishlist-context"
 import localFont from 'next/font/local'
 
 // Import custom fonts locally - using only the available fonts
@@ -70,15 +71,17 @@ export default function RootLayout({
         <AuthProvider>
           <AuthContextProvider>
             <CartProvider>
-              <ThemeProvider 
-                attribute="class" 
-                defaultTheme="light" 
-                enableSystem={false} 
-                disableTransitionOnChange
-              >
-                    {children}
-                <Toaster />
-              </ThemeProvider>
+              <WishlistProvider>
+                <ThemeProvider 
+                  attribute="class" 
+                  defaultTheme="light" 
+                  enableSystem={false} 
+                  disableTransitionOnChange
+                >
+                  {children}
+                  <Toaster />
+                </ThemeProvider>
+              </WishlistProvider>
             </CartProvider>
           </AuthContextProvider>
         </AuthProvider>
