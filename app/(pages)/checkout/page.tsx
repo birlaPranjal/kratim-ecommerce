@@ -396,7 +396,7 @@ export default function CheckoutPage() {
   // If no user, show loading or redirect
   if (!user) {
     return (
-      <div className="container max-w-6xl py-12">
+      <div className="container max-w-6xl mx-auto py-12">
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2">Redirecting to login...</span>
@@ -411,7 +411,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container max-w-6xl py-12">
+    <div className="container max-w-6xl mx-auto py-12">
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
