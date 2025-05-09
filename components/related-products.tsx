@@ -38,10 +38,10 @@ export default function RelatedProducts({ category, currentProductId, products }
       </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
-        {relatedProducts.map((product) => (
-          <ProductCard key={product._id} product={product} />
-        ))}
-      </div>
+          {relatedProducts.map((product) => (
+            <ProductCard key={product._id} product={product} />
+          ))}
+        </div>
 
       <div className="text-center mt-8">
         <Button variant="ghost" asChild className="text-amber-600 hover:text-amber-700">

@@ -37,8 +37,10 @@ export default async function ProductPage({
         <div className="bg-white rounded-xl shadow-sm p-4 md:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Product Gallery */}
-            <div className="lg:sticky lg:top-24 flex justify-center">
-              <ProductGallery images={product.images} productName={product.name} />
+            <div className="lg:sticky lg:top-24 flex items-center md:pl-[10vw] justify-center">
+              <div className="w-[90vw] max-w-[400px] lg:max-w-none lg:w-full">
+                <ProductGallery images={product.images} productName={product.name} />
+              </div>
             </div>
 
             {/* Product Info */}
@@ -46,10 +48,12 @@ export default async function ProductPage({
               <div className="space-y-4">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-serif font-bold text-gray-900">{product.name}</h1>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Badge variant="secondary" className="text-sm">
-                      {formatCategoryName(product.category)}
-                    </Badge>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {product.collectionName && (
+                      <Badge variant="secondary" className="text-sm">
+                        {product.collectionName}
+                      </Badge>
+                    )}
                     {product.inventory > 0 ? (
                       <Badge className="bg-green-100 text-green-800">In Stock</Badge>
                     ) : (
@@ -93,8 +97,15 @@ export default async function ProductPage({
                     </TabsList>
                     <TabsContent value="details" className="mt-4">
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="text-gray-500">Category</div>
-                        <div>{formatCategoryName(product.category)}</div>
+                        
+                      
+
+                        {product.collectionName && (
+                          <>
+                            <div className="text-gray-500">Collection</div>
+                            <div>{product.collectionName}</div>
+                          </>
+                        )}
 
                         {product.material && (
                           <>

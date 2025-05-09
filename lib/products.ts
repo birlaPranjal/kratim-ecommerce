@@ -8,8 +8,14 @@ export interface Product {
   price: number
   images: string[]
   category: string
+  collection?: string
+  collectionName?: string
   featured: boolean
   stock: number
+  inventory: number
+  material?: string
+  dimensions?: string
+  features?: string[]
   variants?: string[]
   createdAt: Date
   updatedAt: Date
@@ -83,6 +89,14 @@ export async function getProducts({
 export async function getProductById(id: string) {
   const { db } = await connectToDatabase()
   const product = await db.collection("products").findOne({ _id: new ObjectId(id) })
+  
+  if (product && product.collection) {
+    const collection = await db.collection("collections").findOne({ _id: new ObjectId(product.collection) })
+    if (collection) {
+      product.collectionName = collection.name
+    }
+  }
+  
   return JSON.parse(JSON.stringify(product))
 }
 
