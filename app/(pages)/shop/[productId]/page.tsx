@@ -79,7 +79,7 @@ export default async function ProductPage({
                     <div>
                       <h3 className="text-lg font-medium mb-2">Features</h3>
                       <ul className="list-disc pl-5 text-gray-600 space-y-1">
-                        {product.features.map((feature, index) => (
+                        {product.features.map((feature: string, index: number) => (
                           <li key={index}>{feature}</li>
                         ))}
                       </ul>
