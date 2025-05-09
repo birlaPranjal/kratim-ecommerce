@@ -60,128 +60,127 @@ export default function AccountPage() {
     : "U"
   
   return (
-    <div className="container max-w-6xl py-12">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold mb-1">My Account</h1>
-        <p className="text-muted-foreground">Manage your account and view your orders</p>
-      </div>
-      
-      <div className="grid gap-8 grid-cols-1 md:grid-cols-3">
-        {/* User Profile Card */}
-        <Card className="md:col-span-1">
-          <CardHeader className="flex flex-row items-center gap-4 pb-2">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user.image || ""} alt={user.name || "User"} />
-              <AvatarFallback className="text-lg">{userInitials}</AvatarFallback>
-            </Avatar>
-            <div>
+    <div className="min-h-screen flex items-center justify-center py-12">
+      <div className="container max-w-6xl">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold mb-1">My Account</h1>
+          <p className="text-muted-foreground">Manage your account and view your orders</p>
+        </div>
+        
+        <div className="grid gap-8 grid-cols-1 md:grid-cols-3">
+          {/* User Profile Card */}
+          <Card className="md:col-span-1">
+            <CardHeader className="flex flex-col items-center text-center pb-2">
+              <Avatar className="h-24 w-24 mb-4">
+                <AvatarImage src={user.image || ""} alt={user.name || "User"} />
+                <AvatarFallback className="text-2xl">{userInitials}</AvatarFallback>
+              </Avatar>
               <CardTitle className="text-xl">{user.name}</CardTitle>
               <CardDescription>{user.email}</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <Link href="/account/addresses">
-                  <Button variant="outline" className="w-full justify-start" size="lg">
-                    <MapPin className="mr-2 h-4 w-4" />
-                    My Addresses
-                  </Button>
-                </Link>
-                <Link href="/account/orders">
-                  <Button variant="outline" className="w-full justify-start" size="lg">
-                    <ShoppingBag className="mr-2 h-4 w-4" />
-                    Order History
-                  </Button>
-                </Link>
-                <Button variant="outline" className="w-full justify-start" size="lg">
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="lg">
-                  <Lock className="mr-2 h-4 w-4" />
-                  Change Password
-                </Button>
-                <Button 
-                  variant="destructive" 
-                  className="w-full justify-start" 
-                  size="lg"
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {/* Orders and Activities */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-            <CardDescription>
-              Your recently placed orders and their status
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recentOrders.length === 0 ? (
-              <div className="text-center py-8 border rounded-lg bg-muted/10">
-                <Package className="h-12 w-12 mx-auto text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium">No orders yet</h3>
-                <p className="text-muted-foreground mt-2">You haven't placed any orders yet</p>
-                <Link href="/shop">
-                  <Button className="mt-4">
-                    Start Shopping
-                  </Button>
-                </Link>
-              </div>
-            ) : (
+            </CardHeader>
+            
+            <CardContent>
               <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order._id} className="border rounded-md p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="font-medium">
-                          Order #{order._id.toString().substring(0, 8).toUpperCase()}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="text-sm font-medium">
-                        ₹{order.totalAmount.toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">{order.items.length} items • </span>
-                        <span className={
-                          order.orderStatus === "processing" ? "text-blue-500" :
-                          order.orderStatus === "shipped" ? "text-orange-500" :
-                          order.orderStatus === "delivered" ? "text-green-500" :
-                          "text-red-500"
-                        }>
-                          {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
-                        </span>
-                      </div>
-                      <Link href={`/order-confirmation/${order._id}`}>
-                        <Button variant="link" className="h-auto p-0">View Order</Button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+                <div className="grid grid-cols-1 gap-4">
+                  <Link href="/account/addresses">
+                    <Button variant="outline" className="w-full justify-center" size="lg">
+                      <MapPin className="mr-2 h-4 w-4" />
+                      My Addresses
+                    </Button>
+                  </Link>
+                  <Link href="/account/orders">
+                    <Button variant="outline" className="w-full justify-center" size="lg">
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      Order History
+                    </Button>
+                  </Link>
+                  <Button variant="outline" className="w-full justify-center" size="lg">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </Button>
+                  <Button variant="outline" className="w-full justify-center" size="lg">
+                    <Lock className="mr-2 h-4 w-4" />
+                    Change Password
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full justify-center" 
+                    size="lg"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </div>
               </div>
-            )}
-          </CardContent>
-          {recentOrders.length > 0 && (
+            </CardContent>
+          </Card>
+          
+          {/* Orders and Activities */}
+          <Card className="md:col-span-2">
+            <CardHeader className="text-center">
+              <CardTitle>Recent Orders</CardTitle>
+              <CardDescription>
+                Your recently placed orders and their status
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentOrders.length === 0 ? (
+                <div className="text-center py-8 border rounded-lg bg-muted/10">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground" />
+                  <h3 className="mt-4 text-lg font-medium">No orders yet</h3>
+                  <p className="text-muted-foreground mt-2">You haven't placed any orders yet</p>
+                  <Link href="/shop">
+                    <Button className="mt-4">
+                      Start Shopping
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentOrders.map((order) => (
+                    <div key={order._id} className="border rounded-md p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="font-medium">
+                            Order #{order._id.toString().substring(0, 8).toUpperCase()}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="text-sm font-medium">
+                          ₹{order.totalAmount.toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">{order.items.length} items • </span>
+                          <span className={
+                            order.orderStatus === "processing" ? "text-blue-500" :
+                            order.orderStatus === "shipped" ? "text-orange-500" :
+                            order.orderStatus === "delivered" ? "text-green-500" :
+                            "text-red-500"
+                          }>
+                            {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
+                          </span>
+                        </div>
+                        <Link href={`/order-confirmation/${order._id}`}>
+                          <Button variant="link" className="h-auto p-0">View Order</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
             <CardFooter className="flex justify-center border-t pt-6">
               <Link href="/account/orders">
                 <Button variant="outline">View All Orders</Button>
               </Link>
             </CardFooter>
-          )}
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   )

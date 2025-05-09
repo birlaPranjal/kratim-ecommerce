@@ -2,13 +2,18 @@ import { NextResponse } from "next/server"
 import { getCollectionById, updateCollection, deleteCollection } from "@/lib/collections"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
+import { connectToDatabase } from '@/lib/mongodb'
+import { ObjectId } from 'mongodb'
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const collection = await getCollectionById(params.id)
+    const { db } = await connectToDatabase()
+    const collection = await db.collection('collections').findOne({
+      _id: new ObjectId(params.id)
+    })
     
     if (!collection) {
       return NextResponse.json(
@@ -21,7 +26,7 @@ export async function GET(
   } catch (error) {
     console.error("Error fetching collection:", error)
     return NextResponse.json(
-      { error: "Failed to fetch collection" },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

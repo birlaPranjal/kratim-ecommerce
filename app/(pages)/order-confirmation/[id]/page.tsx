@@ -77,7 +77,7 @@ export default function OrderConfirmationPage({ params }: { params: { id: string
 
   if (loading) {
     return (
-      <div className="container max-w-4xl py-16 flex flex-col items-center justify-center min-h-[50vh]">
+      <div className="container max-w-4xl mx-auto py-16 flex flex-col items-center justify-center min-h-[50vh]">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <p className="text-lg text-muted-foreground">Loading your order details...</p>
       </div>
@@ -86,7 +86,7 @@ export default function OrderConfirmationPage({ params }: { params: { id: string
 
   if (error) {
     return (
-      <div className="container max-w-4xl py-16 flex flex-col items-center justify-center min-h-[50vh]">
+      <div className="container max-w-4xl mx-auto py-16 flex flex-col items-center justify-center min-h-[50vh]">
         <div className="text-center space-y-4">
           <p className="text-lg text-destructive">{error}</p>
           <Button asChild>
@@ -123,7 +123,7 @@ export default function OrderConfirmationPage({ params }: { params: { id: string
   const orderDate = order.date || order.createdAt
 
   return (
-    <div className="container max-w-4xl py-16">
+    <div className="container max-w-4xl py-16 mx-auto">
       <div className="mb-8 text-center space-y-4">
         <div className="inline-flex items-center justify-center">
           <CheckCircle className="h-16 w-16 text-green-500" />
