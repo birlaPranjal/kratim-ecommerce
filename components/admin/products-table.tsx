@@ -44,6 +44,8 @@ interface Product {
   price: number
   images: string[]
   category?: string
+  collection?: string
+  collectionName?: string
   slug?: string
   inventory?: number
   stock?: number
@@ -142,6 +144,7 @@ export function ProductsTable({ products }: ProductsTableProps) {
           <TableHead>Name</TableHead>
           <TableHead>Price</TableHead>
           <TableHead>Category</TableHead>
+          <TableHead>Collection</TableHead>
           <TableHead>Inventory</TableHead>
           <TableHead className="w-[150px]">Actions</TableHead>
         </TableRow>
@@ -166,8 +169,9 @@ export function ProductsTable({ products }: ProductsTableProps) {
               )}
             </TableCell>
             <TableCell className="font-medium">{product.name}</TableCell>
-            <TableCell>${product.price.toFixed(2)}</TableCell>
-            <TableCell>{product.category}</TableCell>
+            <TableCell>₹{product.price.toFixed(2)}</TableCell>
+            <TableCell>{product.category || "—"}</TableCell>
+            <TableCell>{product.collectionName || "—"}</TableCell>
             <TableCell>{getInventoryStatus(getInventoryCount(product))}</TableCell>
             <TableCell>
               <div className="flex gap-2">
@@ -231,8 +235,17 @@ export function ProductsTable({ products }: ProductsTableProps) {
               )}
               <div className="flex-1">
                 <h3 className="font-medium">{product.name}</h3>
-                <p className="text-sm text-gray-500">${product.price.toFixed(2)}</p>
-                <p className="text-xs text-gray-400">{product.category}</p>
+                <p className="text-sm text-gray-500">₹{product.price.toFixed(2)}</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <p className="text-xs text-gray-400">
+                    {product.category || "No category"}
+                  </p>
+                  {product.collectionName && (
+                    <p className="text-xs text-gray-400">
+                      Collection: {product.collectionName}
+                    </p>
+                  )}
+                </div>
                 <div className="mt-2">{getInventoryStatus(getInventoryCount(product))}</div>
               </div>
               <DropdownMenu>

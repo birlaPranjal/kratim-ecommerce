@@ -4,6 +4,8 @@ import ProductCard from "@/components/product-card"
 import ProductFilters from "@/components/product-filters"
 import { Suspense } from "react"
 import { ProductSkeletonGrid } from "@/components/product-skeleton"
+import MobileFilters from "@/components/mobile-filters"
+import Loading from "@/components/ui/loading"
 
 // Tell Next.js this is a dynamic page that needs searchParams
 export const dynamic = 'force-dynamic';
@@ -72,24 +74,41 @@ export default async function ShopPage({
     maxPrice: isNaN(maxPriceValue) ? maxPrice : maxPriceValue
   }
 
+  // Check if any filters are active
+  const hasActiveFilters = 
+    categoryParam !== 'all' || 
+    collectionParam !== 'all' || 
+    sortParam !== 'default' || 
+    parseInt(minPriceParam) > 0 || 
+    parseInt(maxPriceParam) < maxPrice;
+
   return (
-    <div className="container mx-auto py-8 px-4 sm:px-6">
+    <div className="container mx-auto py-6 px-3 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col space-y-4">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold text-center">
+        <div className="flex flex-col space-y-3">
+          <h1 className="text-2xl md:text-3xl font-serif font-bold text-center">
             Our Collection
           </h1>
           
-          <p className="text-gray-500 text-center max-w-2xl mx-auto mb-8">
+          <p className="text-gray-500 text-center max-w-2xl mx-auto mb-4">
             Discover our curated collection of fine jewelry pieces, crafted with precision and designed for elegance.
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters - Sticky on desktop */}
-          <div className="w-full lg:w-1/4 lg:sticky lg:top-24 lg:self-start">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="font-medium text-lg mb-4">Filters</h2>
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Mobile filters drawer */}
+          <div className="lg:hidden">
+            <MobileFilters 
+              categories={categories}
+              maxPrice={maxPrice}
+              currentFilters={currentFilters}
+              hasActiveFilters={hasActiveFilters}
+            />
+          </div>
+
+          {/* Desktop filters - Sticky on desktop */}
+          <div className="hidden lg:block lg:w-1/4 lg:sticky lg:top-24 lg:self-start">
+            <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-100">
               <ProductFilters 
                 categories={categories} 
                 maxPrice={maxPrice}
@@ -100,44 +119,56 @@ export default async function ShopPage({
 
           {/* Products */}
           <div className="w-full lg:w-3/4">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
+            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-4">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-500">
                   Showing {products.length} {products.length === 1 ? 'product' : 'products'}
                 </p>
-                {/* Could add additional sort controls here */}
+                
+                {hasActiveFilters && (
+                  <a 
+                    href="/shop" 
+                    className="text-xs font-medium text-amber-600 hover:text-amber-700"
+                  >
+                    Reset Filters
+                  </a>
+                )}
               </div>
             </div>
             
-            <Suspense fallback={<ProductSkeletonGrid count={6} />}>
-              {products.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((product) => (
-                    <ProductCard 
-                      key={product._id} 
-                      product={{
-                        ...product,
-                        // Ensure inventory is available (using stock from DB as inventory for the UI)
-                        inventory: product.inventory ?? product.stock ?? 0
-                      }} 
-                    />
-                  ))}
+            <div className="relative">
+              <Suspense fallback={
+                <div className="min-h-[400px]">
+                  <Loading transparent text="Loading products..." />
                 </div>
-              ) : (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
-                  <h3 className="text-lg font-medium">No products found</h3>
-                  <p className="text-gray-500 mt-2">Try adjusting your filters</p>
-                  <button 
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-                    onClick={() => {
-                      window.location.href = '/shop';
-                    }}
-                  >
-                    Reset Filters
-                  </button>
-                </div>
-              )}
-            </Suspense>
+              }>
+                {products.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
+                    {products.map((product) => (
+                      <ProductCard 
+                        key={product._id} 
+                        product={{
+                          ...product,
+                          // Ensure inventory is available (using stock from DB as inventory for the UI)
+                          inventory: product.inventory ?? product.stock ?? 0
+                        }} 
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 text-center">
+                    <h3 className="text-lg font-medium">No products found</h3>
+                    <p className="text-gray-500 mt-2">Try adjusting your filters</p>
+                    <a 
+                      href="/shop"
+                      className="mt-4 inline-block px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition"
+                    >
+                      Reset Filters
+                    </a>
+                  </div>
+                )}
+              </Suspense>
+            </div>
           </div>
         </div>
       </div>
