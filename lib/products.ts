@@ -49,40 +49,135 @@ export async function getProducts({
     filter.category = category
   }
 
-  if (collection) {
-    filter.collection = collection
+  // Always use aggregation pipeline for consistent collectionName lookup
+  let pipeline = []
+  
+  // Match stage - start with our filters
+  let matchStage: any = {}
+  
+  if (category) {
+    matchStage.category = category
   }
-
+  
   if (query) {
-    filter.$or = [{ name: { $regex: query, $options: "i" } }, { description: { $regex: query, $options: "i" } }]
+    matchStage.$or = [
+      { name: { $regex: query, $options: "i" } }, 
+      { description: { $regex: query, $options: "i" } },
+      { category: { $regex: query, $options: "i" } }
+    ]
   }
-
+  
   if (minPrice !== undefined || maxPrice !== undefined) {
-    filter.price = {}
+    matchStage.price = {}
     if (minPrice !== undefined) {
-      filter.price.$gte = minPrice
+      matchStage.price.$gte = minPrice
     }
     if (maxPrice !== undefined) {
-      filter.price.$lte = maxPrice
+      matchStage.price.$lte = maxPrice
     }
   }
-
-  // Build sort
-  const sortOptions: any = {}
-
-  if (sort === "price-asc") {
-    sortOptions.price = 1
-  } else if (sort === "price-desc") {
-    sortOptions.price = -1
-  } else if (sort === "newest") {
-    sortOptions.createdAt = -1
-  } else {
-    // Default sort
-    sortOptions.createdAt = -1
+  
+  // Handle collection filtering
+  if (collection) {
+    try {
+      // Try to convert to ObjectId for proper matching
+      matchStage.collection = new ObjectId(collection)
+    } catch (error) {
+      console.error("Invalid collection ObjectId:", error)
+      matchStage.collection = collection
+    }
   }
-
-  const products = await db.collection("products").find(filter).sort(sortOptions).skip(skip).limit(limit).toArray()
-
+  
+  // Add match stage to pipeline
+  pipeline.push({ $match: matchStage })
+  
+  // Add lookup stage to get collection names
+  pipeline.push({
+    $lookup: {
+      from: "collections",
+      let: { collectionId: "$collection" },
+      pipeline: [
+        { 
+          $match: { 
+            $expr: { 
+              $eq: ["$_id", { $toObjectId: { $ifNull: [{ $toString: "$$collectionId" }, "000000000000000000000000"] } }] 
+            } 
+          } 
+        }
+      ],
+      as: "collectionInfo"
+    }
+  })
+  
+  // Add field for collection name
+  pipeline.push({
+    $addFields: {
+      collectionName: {
+        $cond: {
+          if: { $gt: [{ $size: "$collectionInfo" }, 0] },
+          then: { $arrayElemAt: ["$collectionInfo.name", 0] },
+          else: null
+        }
+      }
+    }
+  })
+  
+  // Sort stage
+  let sortStage: any = {}
+  
+  switch (sort) {
+    case "price-asc":
+      sortStage.price = 1
+      break
+    case "price-desc":
+      sortStage.price = -1
+      break
+    case "name-asc":
+      sortStage.name = 1
+      break
+    case "name-desc":
+      sortStage.name = -1
+      break
+    case "category-asc":
+      sortStage.category = 1
+      break
+    case "category-desc":
+      sortStage.category = -1
+      break
+    case "collection-asc":
+      sortStage.collectionName = 1
+      break
+    case "collection-desc":
+      sortStage.collectionName = -1
+      break
+    case "inventory-asc":
+      sortStage.inventory = 1
+      sortStage.stock = 1
+      break
+    case "inventory-desc":
+      sortStage.inventory = -1
+      sortStage.stock = -1
+      break
+    case "newest":
+      sortStage.createdAt = -1
+      break
+    default:
+      sortStage.createdAt = -1
+  }
+  
+  pipeline.push({ $sort: sortStage })
+  
+  // Add pagination
+  pipeline.push({ $skip: skip })
+  pipeline.push({ $limit: limit })
+  
+  // Remove temporary fields
+  pipeline.push({ $project: { collectionInfo: 0 } })
+  
+  // Execute the pipeline
+  const products = await db.collection("products").aggregate(pipeline).toArray()
+  
+  // Return serialized products
   return JSON.parse(JSON.stringify(products))
 }
 

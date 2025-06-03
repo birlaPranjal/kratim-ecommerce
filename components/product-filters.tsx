@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { X } from "lucide-react"
+import { X, Filter, Loader2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 interface ProductFiltersProps {
   categories: string[]
@@ -31,9 +32,17 @@ interface ProductFiltersProps {
     minPrice: number
     maxPrice: number
   }
+  onApply?: () => void
+  isMobile?: boolean
 }
 
-export default function ProductFilters({ categories, maxPrice, currentFilters }: ProductFiltersProps) {
+export default function ProductFilters({ 
+  categories, 
+  maxPrice, 
+  currentFilters,
+  onApply,
+  isMobile = false
+}: ProductFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -100,6 +109,11 @@ export default function ProductFilters({ categories, maxPrice, currentFilters }:
 
     const query = params.toString()
     router.push(`/shop${query ? `?${query}` : ''}`)
+    
+    // Call the onApply callback if provided
+    if (onApply) {
+      onApply()
+    }
   }
 
   const resetFilters = () => {
@@ -109,106 +123,171 @@ export default function ProductFilters({ categories, maxPrice, currentFilters }:
     setPriceRange([0, maxPrice])
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-medium">Filters</span>
-        {filtersChanged && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={resetFilters}
-            className="h-8 text-sm text-gray-500 hover:text-gray-900"
-          >
-            Reset <X className="ml-1 h-3 w-3" />
-          </Button>
-        )}
-      </div>
+  // Count active filters
+  const activeFilterCount = [
+    category !== 'all',
+    collection !== 'all',
+    sort !== 'default',
+    priceRange[0] > 0,
+    priceRange[1] < maxPrice
+  ].filter(Boolean).length
 
-      <Accordion type="multiple" defaultValue={["price", "category", "collection", "sort"]}>
-        <AccordionItem value="price">
-          <AccordionTrigger>Price Range</AccordionTrigger>
+  return (
+    <div className="space-y-5">
+      {!isMobile && (
+        <div className="flex justify-between items-center border-b pb-3 mb-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-amber-600" />
+            <span className="text-sm font-medium">Filters</span>
+            {activeFilterCount > 0 && (
+              <Badge 
+                className="ml-1 h-5 w-5 p-0 flex items-center justify-center rounded-full bg-amber-500 text-white" 
+                variant="default"
+              >
+                {activeFilterCount}
+              </Badge>
+            )}
+          </div>
+          
+          {filtersChanged && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="h-8 text-sm text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+            >
+              Reset <X className="ml-1 h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      )}
+
+      <Accordion 
+        type="multiple" 
+        defaultValue={isMobile ? ["sort"] : ["price", "category", "collection", "sort"]}
+        className="space-y-3"
+      >
+        <AccordionItem value="price" className="border rounded-md px-3 shadow-sm overflow-hidden">
+          <AccordionTrigger className="py-3 hover:no-underline">
+            <span className="text-sm font-medium flex items-center">
+              <span>Price Range</span>
+              {(priceRange[0] > 0 || priceRange[1] < maxPrice) && (
+                <Badge variant="outline" className="ml-2 bg-amber-50 border-amber-200">Active</Badge>
+              )}
+            </span>
+          </AccordionTrigger>
           <AccordionContent>
-            <div className="space-y-4 pt-2">
+            <div className="space-y-5 pt-2 pb-4">
               <Slider
                 defaultValue={[priceRange[0], priceRange[1]]}
                 max={maxPrice}
                 step={100}
                 value={[priceRange[0], priceRange[1]]}
                 onValueChange={(value) => setPriceRange([value[0], value[1]])}
+                className="mt-6"
               />
-              <div className="flex items-center justify-between">
-                <div className="bg-gray-100 px-3 py-1.5 rounded-md">
-                  <Label className="text-xs">Min</Label>
-                  <p className="font-medium">₹{priceRange[0]}</p>
+              <div className="flex items-center justify-between mt-4">
+                <div className="bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
+                  <Label className="text-xs text-gray-500">Min</Label>
+                  <p className="font-medium text-sm">₹{priceRange[0]}</p>
                 </div>
-                <div className="bg-gray-100 px-3 py-1.5 rounded-md">
-                  <Label className="text-xs">Max</Label>
-                  <p className="font-medium">₹{priceRange[1]}</p>
+                <div className="bg-gray-50 px-3 py-2 rounded-md border border-gray-100">
+                  <Label className="text-xs text-gray-500">Max</Label>
+                  <p className="font-medium text-sm">₹{priceRange[1]}</p>
                 </div>
               </div>
             </div>
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="category">
-          <AccordionTrigger>Category</AccordionTrigger>
+        <AccordionItem value="category" className="border rounded-md px-3 shadow-sm overflow-hidden">
+          <AccordionTrigger className="py-3 hover:no-underline">
+            <span className="text-sm font-medium flex items-center">
+              <span>Category</span>
+              {category !== 'all' && (
+                <Badge variant="outline" className="ml-2 bg-amber-50 border-amber-200">Active</Badge>
+              )}
+            </span>
+          </AccordionTrigger>
           <AccordionContent>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="collection">
-          <AccordionTrigger>Collection</AccordionTrigger>
-          <AccordionContent>
-            <Select value={collection} onValueChange={setCollection}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="All Collections" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Collections</SelectItem>
-                {isLoading ? (
-                  <SelectItem value="" disabled>Loading collections...</SelectItem>
-                ) : collections.length > 0 ? (
-                  collections.map((col) => (
-                    <SelectItem key={col._id} value={col._id}>
-                      {col.name}
+            <div className="py-3">
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="w-full bg-white border-gray-200">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
                     </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="" disabled>No collections available</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="sort">
-          <AccordionTrigger>Sort By</AccordionTrigger>
+        <AccordionItem value="collection" className="border rounded-md px-3 shadow-sm overflow-hidden">
+          <AccordionTrigger className="py-3 hover:no-underline">
+            <span className="text-sm font-medium flex items-center">
+              <span>Collection</span>
+              {collection !== 'all' && (
+                <Badge variant="outline" className="ml-2 bg-amber-50 border-amber-200">Active</Badge>
+              )}
+            </span>
+          </AccordionTrigger>
           <AccordionContent>
-            <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Default" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">Default</SelectItem>
-                <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                <SelectItem value="newest">Newest First</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="py-3">
+              <Select value={collection} onValueChange={setCollection}>
+                <SelectTrigger className="w-full bg-white border-gray-200">
+                  <SelectValue placeholder="All Collections" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Collections</SelectItem>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-amber-600 mr-2" />
+                      <span className="text-sm">Loading...</span>
+                    </div>
+                  ) : collections.length > 0 ? (
+                    collections.map((col) => (
+                      <SelectItem key={col._id} value={col._id}>
+                        {col.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>No collections available</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="sort" className="border rounded-md px-3 shadow-sm overflow-hidden">
+          <AccordionTrigger className="py-3 hover:no-underline">
+            <span className="text-sm font-medium flex items-center">
+              <span>Sort By</span>
+              {sort !== 'default' && (
+                <Badge variant="outline" className="ml-2 bg-amber-50 border-amber-200">Active</Badge>
+              )}
+            </span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="py-3">
+              <Select value={sort} onValueChange={setSort}>
+                <SelectTrigger className="w-full bg-white border-gray-200">
+                  <SelectValue placeholder="Default" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                  <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
@@ -216,7 +295,7 @@ export default function ProductFilters({ categories, maxPrice, currentFilters }:
       {filtersChanged && (
         <Button 
           onClick={handleApplyFilters} 
-          className="w-full bg-amber-600 hover:bg-amber-700 mt-4"
+          className="w-full bg-amber-600 hover:bg-amber-700 mt-4 transition-all"
         >
           Apply Filters
         </Button>
